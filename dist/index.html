@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LeetCode Hot 100 做题与长期复习记录">
+  <meta name="theme-color" content="#087f8c">
+  <title>Hot 100 复习台</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand-block">
+      <div class="brand-mark" aria-hidden="true">100</div>
+      <div>
+        <p class="eyebrow">LEETCODE REVIEW</p>
+        <h1>Hot 100 复习台</h1>
+        <p id="todayLabel" class="today-label"></p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="dataButton" class="button secondary" type="button">数据</button>
+      <button id="exportButton" class="button primary" type="button">导出备份</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="overview" aria-label="学习概览">
+      <div class="metric"><span>已开始</span><strong id="startedMetric">0</strong><small>/ 100 题</small></div>
+      <div class="metric"><span>五轮完成</span><strong id="coreMetric">0</strong><small>/ 100 题</small></div>
+      <div class="metric"><span>累计记录</span><strong id="attemptMetric">0</strong><small>次</small></div>
+      <div class="metric accent"><span>今日到期</span><strong id="dueMetric">0</strong><small>题待复习</small></div>
+      <div class="progress-block">
+        <div><span>基础五轮进度</span><strong id="progressText">0%</strong></div>
+        <div class="progress-track"><span id="progressBar"></span></div>
+      </div>
+    </section>
+
+    <section class="today-panel" aria-labelledby="todayReviewTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">TODAY</p>
+          <h2 id="todayReviewTitle">今日复习</h2>
+        </div>
+        <button id="showAllDueButton" class="text-button" type="button">只看今日到期</button>
+      </div>
+      <div id="dueList" class="due-list"></div>
+    </section>
+
+    <section class="workspace" aria-labelledby="problemListTitle">
+      <div class="workspace-head">
+        <div>
+          <p class="eyebrow">PROGRESS</p>
+          <h2 id="problemListTitle">题目进度</h2>
+        </div>
+        <div class="filters">
+          <label class="search-field"><span class="sr-only">搜索题目</span><input id="searchInput" type="search" placeholder="搜索题号或题名"></label>
+          <label><span class="sr-only">专题</span><select id="categoryFilter"><option value="all">全部专题</option></select></label>
+          <label><span class="sr-only">进度</span><select id="statusFilter"><option value="all">全部进度</option><option value="not-started">还没开始</option><option value="started">已经开始</option><option value="due">今日到期</option><option value="core-done">五轮完成</option></select></label>
+        </div>
+      </div>
+      <div id="problemGroups"></div>
+      <div id="emptyState" class="empty-state hidden">没有符合当前筛选条件的题目。</div>
+    </section>
+  </main>
+
+  <dialog id="dataDialog" class="data-dialog">
+    <form method="dialog" class="dialog-shell">
+      <div class="dialog-head">
+        <div><p class="eyebrow">DATA</p><h2>数据管理</h2></div>
+        <button class="icon-button" value="cancel" type="submit" aria-label="关闭">×</button>
+      </div>
+      <p class="dialog-note">支持直接导入原网页导出的 JSON。导入前会先在当前浏览器生成一份安全备份。</p>
+      <div class="data-actions">
+        <button id="importButton" class="button primary" type="button">导入旧记录</button>
+        <button id="dialogExportButton" class="button secondary" type="button">导出当前记录</button>
+        <button id="clearButton" class="button danger" type="button">清空当前浏览器数据</button>
+      </div>
+      <input id="fileInput" type="file" accept="application/json,.json" hidden>
+      <div id="dataMessage" class="data-message" aria-live="polite"></div>
+    </form>
+  </dialog>
+
+  <dialog id="clearDialog" class="confirm-dialog">
+    <form method="dialog" class="dialog-shell compact">
+      <h2>确认清空？</h2>
+      <p>只会删除这个网站在当前浏览器中的记录，不会碰你的 JSON 文件。</p>
+      <div class="confirm-actions"><button class="button secondary" value="cancel">取消</button><button id="confirmClearButton" class="button danger" value="default" type="button">确认清空</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

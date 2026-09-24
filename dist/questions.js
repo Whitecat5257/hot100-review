@@ -1,0 +1,122 @@
+    window.QUESTION_GROUPS = [
+      ["数组与哈希", [
+        [1, "两数之和", "Two Sum", "Easy", "two-sum"],
+        [49, "字母异位词分组", "Group Anagrams", "Medium", "group-anagrams"],
+        [128, "最长连续序列", "Longest Consecutive Sequence", "Medium", "longest-consecutive-sequence"],
+        [53, "最大子数组和", "Maximum Subarray", "Medium", "maximum-subarray"],
+        [56, "合并区间", "Merge Intervals", "Medium", "merge-intervals"],
+        [189, "轮转数组", "Rotate Array", "Medium", "rotate-array"],
+        [238, "除自身以外数组的乘积", "Product of Array Except Self", "Medium", "product-of-array-except-self"],
+        [41, "缺失的第一个正数", "First Missing Positive", "Hard", "first-missing-positive"],
+        [136, "只出现一次的数字", "Single Number", "Easy", "single-number"],
+        [169, "多数元素", "Majority Element", "Easy", "majority-element"],
+        [75, "颜色分类", "Sort Colors", "Medium", "sort-colors"],
+        [31, "下一个排列", "Next Permutation", "Medium", "next-permutation"],
+        [287, "寻找重复数", "Find the Duplicate Number", "Medium", "find-the-duplicate-number"]
+      ]],
+      ["双指针与滑动窗口", [
+        [283, "移动零", "Move Zeroes", "Easy", "move-zeroes"],
+        [11, "盛最多水的容器", "Container With Most Water", "Medium", "container-with-most-water"],
+        [15, "三数之和", "3Sum", "Medium", "3sum"],
+        [42, "接雨水", "Trapping Rain Water", "Hard", "trapping-rain-water"],
+        [3, "无重复字符的最长子串", "Longest Substring Without Repeating Characters", "Medium", "longest-substring-without-repeating-characters"],
+        [438, "找到字符串中所有字母异位词", "Find All Anagrams in a String", "Medium", "find-all-anagrams-in-a-string"],
+        [560, "和为 K 的子数组", "Subarray Sum Equals K", "Medium", "subarray-sum-equals-k"],
+        [239, "滑动窗口最大值", "Sliding Window Maximum", "Hard", "sliding-window-maximum"],
+        [76, "最小覆盖子串", "Minimum Window Substring", "Hard", "minimum-window-substring"]
+      ]],
+      ["矩阵", [
+        [73, "矩阵置零", "Set Matrix Zeroes", "Medium", "set-matrix-zeroes"],
+        [54, "螺旋矩阵", "Spiral Matrix", "Medium", "spiral-matrix"],
+        [48, "旋转图像", "Rotate Image", "Medium", "rotate-image"],
+        [240, "搜索二维矩阵 II", "Search a 2D Matrix II", "Medium", "search-a-2d-matrix-ii"]
+      ]],
+      ["二分查找", [
+        [35, "搜索插入位置", "Search Insert Position", "Easy", "search-insert-position"],
+        [74, "搜索二维矩阵", "Search a 2D Matrix", "Medium", "search-a-2d-matrix"],
+        [34, "在排序数组中查找元素的第一个和最后一个位置", "Find First and Last Position of Element in Sorted Array", "Medium", "find-first-and-last-position-of-element-in-sorted-array"],
+        [33, "搜索旋转排序数组", "Search in Rotated Sorted Array", "Medium", "search-in-rotated-sorted-array"],
+        [153, "寻找旋转排序数组中的最小值", "Find Minimum in Rotated Sorted Array", "Medium", "find-minimum-in-rotated-sorted-array"],
+        [4, "寻找两个正序数组的中位数", "Median of Two Sorted Arrays", "Hard", "median-of-two-sorted-arrays"]
+      ]],
+      ["链表", [
+        [160, "相交链表", "Intersection of Two Linked Lists", "Easy", "intersection-of-two-linked-lists"],
+        [206, "反转链表", "Reverse Linked List", "Easy", "reverse-linked-list"],
+        [234, "回文链表", "Palindrome Linked List", "Easy", "palindrome-linked-list"],
+        [141, "环形链表", "Linked List Cycle", "Easy", "linked-list-cycle"],
+        [142, "环形链表 II", "Linked List Cycle II", "Medium", "linked-list-cycle-ii"],
+        [21, "合并两个有序链表", "Merge Two Sorted Lists", "Easy", "merge-two-sorted-lists"],
+        [2, "两数相加", "Add Two Numbers", "Medium", "add-two-numbers"],
+        [19, "删除链表的倒数第 N 个结点", "Remove Nth Node From End of List", "Medium", "remove-nth-node-from-end-of-list"],
+        [24, "两两交换链表中的节点", "Swap Nodes in Pairs", "Medium", "swap-nodes-in-pairs"],
+        [25, "K 个一组翻转链表", "Reverse Nodes in k-Group", "Hard", "reverse-nodes-in-k-group"],
+        [138, "随机链表的复制", "Copy List with Random Pointer", "Medium", "copy-list-with-random-pointer"],
+        [148, "排序链表", "Sort List", "Medium", "sort-list"],
+        [23, "合并 K 个升序链表", "Merge k Sorted Lists", "Hard", "merge-k-sorted-lists"],
+        [146, "LRU 缓存", "LRU Cache", "Medium", "lru-cache"]
+      ]],
+      ["栈与堆", [
+        [20, "有效的括号", "Valid Parentheses", "Easy", "valid-parentheses"],
+        [155, "最小栈", "Min Stack", "Medium", "min-stack"],
+        [394, "字符串解码", "Decode String", "Medium", "decode-string"],
+        [739, "每日温度", "Daily Temperatures", "Medium", "daily-temperatures"],
+        [84, "柱状图中最大的矩形", "Largest Rectangle in Histogram", "Hard", "largest-rectangle-in-histogram"],
+        [215, "数组中的第 K 个最大元素", "Kth Largest Element in an Array", "Medium", "kth-largest-element-in-an-array"],
+        [347, "前 K 个高频元素", "Top K Frequent Elements", "Medium", "top-k-frequent-elements"],
+        [295, "数据流的中位数", "Find Median from Data Stream", "Hard", "find-median-from-data-stream"]
+      ]],
+      ["二叉树", [
+        [94, "二叉树的中序遍历", "Binary Tree Inorder Traversal", "Easy", "binary-tree-inorder-traversal"],
+        [104, "二叉树的最大深度", "Maximum Depth of Binary Tree", "Easy", "maximum-depth-of-binary-tree"],
+        [226, "翻转二叉树", "Invert Binary Tree", "Easy", "invert-binary-tree"],
+        [101, "对称二叉树", "Symmetric Tree", "Easy", "symmetric-tree"],
+        [543, "二叉树的直径", "Diameter of Binary Tree", "Easy", "diameter-of-binary-tree"],
+        [102, "二叉树的层序遍历", "Binary Tree Level Order Traversal", "Medium", "binary-tree-level-order-traversal"],
+        [108, "将有序数组转换为二叉搜索树", "Convert Sorted Array to Binary Search Tree", "Easy", "convert-sorted-array-to-binary-search-tree"],
+        [98, "验证二叉搜索树", "Validate Binary Search Tree", "Medium", "validate-binary-search-tree"],
+        [230, "二叉搜索树中第 K 小的元素", "Kth Smallest Element in a BST", "Medium", "kth-smallest-element-in-a-bst"],
+        [199, "二叉树的右视图", "Binary Tree Right Side View", "Medium", "binary-tree-right-side-view"],
+        [114, "二叉树展开为链表", "Flatten Binary Tree to Linked List", "Medium", "flatten-binary-tree-to-linked-list"],
+        [105, "从前序与中序遍历序列构造二叉树", "Construct Binary Tree from Preorder and Inorder Traversal", "Medium", "construct-binary-tree-from-preorder-and-inorder-traversal"],
+        [437, "路径总和 III", "Path Sum III", "Medium", "path-sum-iii"],
+        [236, "二叉树的最近公共祖先", "Lowest Common Ancestor of a Binary Tree", "Medium", "lowest-common-ancestor-of-a-binary-tree"],
+        [124, "二叉树中的最大路径和", "Binary Tree Maximum Path Sum", "Hard", "binary-tree-maximum-path-sum"]
+      ]],
+      ["图论", [
+        [200, "岛屿数量", "Number of Islands", "Medium", "number-of-islands"],
+        [994, "腐烂的橘子", "Rotting Oranges", "Medium", "rotting-oranges"],
+        [207, "课程表", "Course Schedule", "Medium", "course-schedule"],
+        [208, "实现 Trie（前缀树）", "Implement Trie (Prefix Tree)", "Medium", "implement-trie-prefix-tree"]
+      ]],
+      ["回溯", [
+        [46, "全排列", "Permutations", "Medium", "permutations"],
+        [78, "子集", "Subsets", "Medium", "subsets"],
+        [17, "电话号码的字母组合", "Letter Combinations of a Phone Number", "Medium", "letter-combinations-of-a-phone-number"],
+        [39, "组合总和", "Combination Sum", "Medium", "combination-sum"],
+        [22, "括号生成", "Generate Parentheses", "Medium", "generate-parentheses"],
+        [79, "单词搜索", "Word Search", "Medium", "word-search"],
+        [131, "分割回文串", "Palindrome Partitioning", "Medium", "palindrome-partitioning"],
+        [51, "N 皇后", "N-Queens", "Hard", "n-queens"]
+      ]],
+      ["动态规划与贪心", [
+        [70, "爬楼梯", "Climbing Stairs", "Easy", "climbing-stairs"],
+        [118, "杨辉三角", "Pascal's Triangle", "Easy", "pascals-triangle"],
+        [198, "打家劫舍", "House Robber", "Medium", "house-robber"],
+        [279, "完全平方数", "Perfect Squares", "Medium", "perfect-squares"],
+        [322, "零钱兑换", "Coin Change", "Medium", "coin-change"],
+        [139, "单词拆分", "Word Break", "Medium", "word-break"],
+        [300, "最长递增子序列", "Longest Increasing Subsequence", "Medium", "longest-increasing-subsequence"],
+        [32, "最长有效括号", "Longest Valid Parentheses", "Hard", "longest-valid-parentheses"],
+        [152, "乘积最大子数组", "Maximum Product Subarray", "Medium", "maximum-product-subarray"],
+        [416, "分割等和子集", "Partition Equal Subset Sum", "Medium", "partition-equal-subset-sum"],
+        [62, "不同路径", "Unique Paths", "Medium", "unique-paths"],
+        [64, "最小路径和", "Minimum Path Sum", "Medium", "minimum-path-sum"],
+        [5, "最长回文子串", "Longest Palindromic Substring", "Medium", "longest-palindromic-substring"],
+        [1143, "最长公共子序列", "Longest Common Subsequence", "Medium", "longest-common-subsequence"],
+        [72, "编辑距离", "Edit Distance", "Hard", "edit-distance"],
+        [121, "买卖股票的最佳时机", "Best Time to Buy and Sell Stock", "Easy", "best-time-to-buy-and-sell-stock"],
+        [55, "跳跃游戏", "Jump Game", "Medium", "jump-game"],
+        [45, "跳跃游戏 II", "Jump Game II", "Medium", "jump-game-ii"],
+        [763, "划分字母区间", "Partition Labels", "Medium", "partition-labels"]
+      ]]
+    ];
