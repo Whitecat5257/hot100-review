@@ -123,7 +123,27 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .problem-table { width: 100%; min-width: 1120px; border-collapse: collapse; table-layout: fixed; }
 .problem-table th { padding: 10px 12px; color: var(--muted); font-size: 12px; text-align: left; background: #fbfdfd; }
 .problem-table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: middle; }
-.problem-table tr.due-row { background: #fffaf6; }
+.problem-row { background: #fff; transition: background-color .2s ease; }
+
+/* Five calm green steps for the fixed review rounds. */
+.problem-row.state-core.core-1 { background: #f5fbf7; }
+.problem-row.state-core.core-2 { background: #eef8f2; }
+.problem-row.state-core.core-3 { background: #e5f3e9; }
+.problem-row.state-core.core-4 { background: #d9eddf; }
+.problem-row.state-core.core-5 { background: #cde6d5; }
+
+/* From round six onward, the latest mastery rating controls the purple depth. */
+.problem-row.state-adaptive.mastery-1 { background: #f8f5fb; }
+.problem-row.state-adaptive.mastery-2 { background: #efe8f6; }
+.problem-row.state-adaptive.mastery-3 { background: #e2d5ef; }
+
+/* Due and overdue warnings override progress colors and deepen with elapsed time. */
+.problem-row.state-overdue.overdue-1 { background: #fff6f5; }
+.problem-row.state-overdue.overdue-2 { background: #ffefed; }
+.problem-row.state-overdue.overdue-3 { background: #ffe5e2; }
+.problem-row.state-overdue.overdue-4 { background: #ffd9d5; }
+.problem-row.state-overdue.overdue-5 { background: #ffcbc6; }
+.problem-row.state-overdue .next-review { color: #9f2f35; }
 .col-order { width: 54px; text-align: center !important; }
 .col-problem { width: 235px; }
 .col-level { width: 82px; }

@@ -228,10 +228,33 @@
     return queryMatch && categoryMatch && statusMatch;
   }
 
+  function rowVisualClass(record, info) {
+    const completed = completedRounds(record);
+    if (completed === 0) return "state-not-started";
+
+    if (info.due && info.dueDate) {
+      const overdueDays = Math.max(0, -daysBetween(todayISO(), info.dueDate));
+      const level = overdueDays === 0 ? 1
+        : overdueDays <= 2 ? 2
+          : overdueDays <= 6 ? 3
+            : overdueDays <= 13 ? 4
+              : 5;
+      return `state-overdue overdue-${level}`;
+    }
+
+    if (completed <= CORE_ROUNDS) {
+      return `state-core core-${completed}`;
+    }
+
+    const ratingLevel = { none: 1, partial: 2, fluent: 3 }[record.ratings[completed - 1]] || 1;
+    return `state-adaptive mastery-${ratingLevel}`;
+  }
+
   function renderProblemRow(problem) {
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
     const info = reviewInfo(problem);
+    const visualClass = rowVisualClass(record, info);
     const visibleRounds = Math.max(CORE_ROUNDS, completed + 1);
     const nextClass = info.status === "pending" ? "next-review pending" : "next-review";
     const nextDetail = info.dueDate
@@ -242,7 +265,7 @@
           ? "选择掌握程度后生成"
           : "";
     return `
-      <tr data-problem-id="${problem.id}" class="${info.due ? "due-row" : ""}">
+      <tr data-problem-id="${problem.id}" class="problem-row ${visualClass}">
         <td class="col-order">${problem.order}</td>
         <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener"><span>${problem.id}</span> ${escapeHtml(problem.cn)}</a><div class="problem-en">${escapeHtml(problem.en)}</div></td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
