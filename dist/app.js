@@ -91,7 +91,7 @@
     const length = Math.max(CORE_ROUNDS, sourceRounds.length, sourceDates.length, sourceRatings.length);
     const rounds = Array.from({ length }, (_, index) => Boolean(sourceRounds[index] || sourceDates[index]));
     const dates = Array.from({ length }, (_, index) => rounds[index] ? normalizeDate(sourceDates[index]) : "");
-    const ratings = Array.from({ length }, (_, index) => rounds[index] && RATINGS[sourceRatings[index]] ? sourceRatings[index] : "");
+    const ratings = Array.from({ length }, (_, index) => index >= CORE_ROUNDS && rounds[index] && RATINGS[sourceRatings[index]] ? sourceRatings[index] : "");
     return { rounds, dates, ratings, note: typeof raw.note === "string" ? raw.note : "" };
   }
 
@@ -142,6 +142,8 @@
     let delay = null;
     if (completed < CORE_ROUNDS) {
       delay = FIXED_DELAYS[completed - 1];
+    } else if (completed === CORE_ROUNDS) {
+      return { status: "core-complete", text: "五轮已完成", due: false, nextRound: completed };
     } else {
       delay = RATINGS[record.ratings[completed - 1]]?.days || null;
     }
@@ -166,7 +168,7 @@
 
   function renderRoundCell(record, round) {
     const date = record.dates[round] || "";
-    const showRating = round >= CORE_ROUNDS - 1 && Boolean(date);
+    const showRating = round >= CORE_ROUNDS && Boolean(date);
     return `
       <div class="round-cell">
         <span class="round-label">第${round + 1}次</span>
@@ -232,7 +234,13 @@
     const info = reviewInfo(problem);
     const visibleRounds = Math.max(CORE_ROUNDS, completed + 1);
     const nextClass = info.status === "pending" ? "next-review pending" : "next-review";
-    const nextDetail = info.dueDate ? `计划日期 ${info.dueDate}` : completed >= CORE_ROUNDS ? "完成掌握程度选择后生成" : "";
+    const nextDetail = info.dueDate
+      ? `计划日期 ${info.dueDate}`
+      : completed === CORE_ROUNDS
+        ? "可继续记录第 6 次"
+        : completed > CORE_ROUNDS
+          ? "选择掌握程度后生成"
+          : "";
     return `
       <tr data-problem-id="${problem.id}" class="${info.due ? "due-row" : ""}">
         <td class="col-order">${problem.order}</td>
@@ -369,7 +377,7 @@
       {
         name: "record_problem_attempt",
         title: "记录一次做题完成",
-        description: "为指定题目记录下一次完成日期；第 5 次及以后必须同时提供掌握程度。",
+        description: "为指定题目记录下一次完成日期；第 6 次及以后必须同时提供掌握程度。",
         inputSchema: {
           type: "object",
           properties: {
@@ -388,11 +396,11 @@
           if (!date) throw new Error("日期格式无效");
           const record = getRecord(id);
           const round = completedRounds(record);
-          if (round >= CORE_ROUNDS - 1 && !RATINGS[input?.rating]) throw new Error("第 5 次及以后必须选择掌握程度");
+          if (round >= CORE_ROUNDS && !RATINGS[input?.rating]) throw new Error("第 6 次及以后必须选择掌握程度");
           ensureRound(record, round);
           record.rounds[round] = true;
           record.dates[round] = date;
-          record.ratings[round] = round >= CORE_ROUNDS - 1 ? input.rating : "";
+          record.ratings[round] = round >= CORE_ROUNDS ? input.rating : "";
           saveState();
           render();
           const problem = problems.find((item) => item.id === id);
