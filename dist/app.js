@@ -14,7 +14,11 @@
 
   const baseGroups = Array.isArray(window.QUESTION_GROUPS) ? window.QUESTION_GROUPS : [];
   const baseCategories = baseGroups.map(([category]) => category);
-  const leetcodeCatalog = window.LEETCODE_CATALOG || {};
+  const leetcodeCatalog = (Array.isArray(window.LEETCODE_CATALOG)
+    ? window.LEETCODE_CATALOG
+    : Object.entries(window.LEETCODE_CATALOG || {}).map(([id, item]) => [id, ...item]))
+    .map(([id, title, slug, level]) => ({ id: String(id), title: String(title), slug: String(slug), level: Number(level) }))
+    .filter((item) => item.id && item.title && item.slug);
   const baseProblems = baseGroups.flatMap(([category, items]) => items.map((item, index) => ({
     category,
     categoryOrder: index + 1,
@@ -57,15 +61,20 @@
     addProblemForm: document.querySelector("#addProblemForm"),
     newProblemCategory: document.querySelector("#newProblemCategory"),
     newProblemChineseTitle: document.querySelector("#newProblemChineseTitle"),
+    lookupHint: document.querySelector("#lookupHint"),
+    lookupCandidates: document.querySelector("#lookupCandidates"),
+    lookupResult: document.querySelector("#lookupResult"),
     lookupProblemNumber: document.querySelector("#lookupProblemNumber"),
     lookupProblemTitle: document.querySelector("#lookupProblemTitle"),
     lookupProblemDifficulty: document.querySelector("#lookupProblemDifficulty"),
+    confirmAddProblemButton: document.querySelector("#confirmAddProblemButton"),
     toast: document.querySelector("#toast")
   };
 
   let state = loadState();
   let toastTimer = 0;
   let pendingProblem = null;
+  let pendingMatches = [];
 
   function todayISO() {
     const date = new Date();
@@ -104,11 +113,20 @@
       .replace(/'/g, "&#039;");
   }
 
+  function problemIdKey(value) {
+    return String(value || "").trim().toUpperCase().replace(/\s+/g, "");
+  }
+
+  function hasProblemId(id) {
+    const key = problemIdKey(id);
+    return problems.some((problem) => problemIdKey(problem.id) === key);
+  }
+
   function normalizeCustomProblem(raw) {
     const id = String(raw?.id || "").trim();
     const category = String(raw?.category || "");
     const difficulty = ["Easy", "Medium", "Hard"].includes(raw?.difficulty) ? raw.difficulty : "Medium";
-    if (!/^\d+$/.test(id) || baseIds.has(id) || !baseCategories.includes(category)) return null;
+    if (!id || id.length > 40 || baseIds.has(id) || !baseCategories.includes(category)) return null;
     if (!raw?.slug || (!raw?.cn && !raw?.en)) return null;
     return {
       id,
@@ -126,8 +144,9 @@
     if (!Array.isArray(raw)) return [];
     const seen = new Set();
     return raw.map(normalizeCustomProblem).filter((problem) => {
-      if (!problem || seen.has(problem.id)) return false;
-      seen.add(problem.id);
+      const key = problemIdKey(problem?.id);
+      if (!problem || seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }
@@ -341,9 +360,9 @@
     const englishTitle = problem.en ? `<div class="problem-en">${escapeHtml(problem.en)}</div>` : "";
     const customBadge = problem.isCustom ? `<span class="custom-badge">补充</span>` : "";
     return `
-      <tr data-problem-id="${problem.id}" class="problem-row ${visualClass}">
+      <tr data-problem-id="${escapeHtml(problem.id)}" class="problem-row ${visualClass}">
         <td class="col-order">${displayOrder}</td>
-        <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener"><span>${problem.id}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
+        <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener"><span>${escapeHtml(problem.id)}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
         <td class="col-next"><div class="${nextClass}"><span>${escapeHtml(info.text)}</span>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
@@ -474,34 +493,81 @@
     return Number(level) === 1 ? "Easy" : Number(level) === 3 ? "Hard" : "Medium";
   }
 
+  function trailingProblemNumber(id) {
+    return String(id).match(/(\d+(?:\.\d+)?)$/)?.[1] || "";
+  }
+
+  function findCatalogMatches(query) {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const key = problemIdKey(trimmed);
+    if (/^\d+$/.test(trimmed)) {
+      const number = Number(trimmed);
+      return leetcodeCatalog.filter((item) => {
+        const suffix = trailingProblemNumber(item.id);
+        return suffix && !suffix.includes(".") && Number(suffix) === number;
+      }).sort((a, b) => {
+        const aExact = /^\d+$/.test(a.id) ? 0 : 1;
+        const bExact = /^\d+$/.test(b.id) ? 0 : 1;
+        return aExact - bExact || a.id.localeCompare(b.id, "zh-CN", { numeric: true });
+      });
+    }
+    return leetcodeCatalog.filter((item) => problemIdKey(item.id) === key);
+  }
+
+  function selectLookupCandidate(index) {
+    const candidate = pendingMatches[index];
+    if (!candidate || hasProblemId(candidate.id)) return;
+    pendingProblem = {
+      id: candidate.id,
+      title: candidate.title,
+      slug: candidate.slug,
+      difficulty: difficultyFromLevel(candidate.level)
+    };
+    els.lookupCandidates.querySelectorAll(".candidate-button").forEach((button, buttonIndex) => {
+      button.classList.toggle("selected", buttonIndex === index);
+      button.setAttribute("aria-pressed", String(buttonIndex === index));
+    });
+    els.lookupProblemNumber.textContent = pendingProblem.id;
+    els.lookupProblemTitle.textContent = pendingProblem.title;
+    els.lookupProblemDifficulty.textContent = difficultyText(pendingProblem.difficulty);
+    els.lookupResult.classList.remove("hidden");
+    els.confirmAddProblemButton.disabled = false;
+  }
+
+  function renderLookupCandidates(matches) {
+    els.lookupHint.textContent = matches.length > 1
+      ? `“${els.newProblemIdInput.value.trim()}” 对应 ${matches.length} 道系列题，请确认你要录入的题目。`
+      : "已从力扣公开题库中找到以下题目。";
+    els.lookupCandidates.innerHTML = matches.map((item, index) => {
+      const exists = hasProblemId(item.id);
+      return `<button class="candidate-button${exists ? " exists" : ""}" type="button" data-candidate-index="${index}" ${exists ? "disabled" : ""} aria-pressed="false">
+        <span>${escapeHtml(item.id)}</span><strong>${escapeHtml(item.title)}</strong><small>${difficultyText(difficultyFromLevel(item.level))}${exists ? " · 已在题库" : ""}</small>
+      </button>`;
+    }).join("");
+  }
+
   function lookupNewProblem() {
-    const id = els.newProblemIdInput.value.trim();
-    if (!/^\d+$/.test(id)) {
-      showToast("请输入正确的力扣题号");
+    const query = els.newProblemIdInput.value.trim();
+    if (!query) {
+      showToast("请输入力扣题号");
       els.newProblemIdInput.focus();
       return;
     }
-    if (validIds.has(id)) {
-      showToast("这道题已经在题库中了");
-      return;
-    }
-    const metadata = leetcodeCatalog[id];
-    if (!Array.isArray(metadata)) {
+    const matches = findCatalogMatches(query);
+    if (!matches.length) {
       showToast("暂未在力扣公开题库中找到该题号");
       return;
     }
-    pendingProblem = {
-      id,
-      title: metadata[0],
-      slug: metadata[1],
-      difficulty: difficultyFromLevel(metadata[2])
-    };
-    els.lookupProblemNumber.textContent = `#${id}`;
-    els.lookupProblemTitle.textContent = pendingProblem.title;
-    els.lookupProblemDifficulty.textContent = difficultyText(pendingProblem.difficulty);
+    pendingMatches = matches;
+    pendingProblem = null;
+    els.lookupResult.classList.add("hidden");
+    els.confirmAddProblemButton.disabled = true;
     els.newProblemChineseTitle.value = "";
     els.newProblemCategory.value = els.categoryFilter.value !== "all" ? els.categoryFilter.value : baseCategories[0];
+    renderLookupCandidates(matches);
     els.addProblemDialog.showModal();
+    if (matches.length === 1 && !hasProblemId(matches[0].id)) selectLookupCandidate(0);
   }
 
   function addPendingProblem() {
@@ -524,6 +590,7 @@
     els.newProblemIdInput.value = "";
     showToast(`已加入 ${pendingProblem.id}. ${chineseTitle || pendingProblem.title}`);
     pendingProblem = null;
+    pendingMatches = [];
   }
 
   function registerWebMcpTools() {
@@ -624,6 +691,10 @@
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", lookupNewProblem);
   els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") lookupNewProblem(); });
+  els.lookupCandidates.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-candidate-index]");
+    if (button) selectLookupCandidate(Number(button.dataset.candidateIndex));
+  });
   els.addProblemForm.addEventListener("submit", (event) => { event.preventDefault(); addPendingProblem(); });
   document.querySelector("#closeAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
   document.querySelector("#cancelAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());

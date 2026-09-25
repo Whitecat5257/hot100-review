@@ -61,7 +61,7 @@ h3 { font-size: 18px; }
 .today-label { margin-top: 4px; color: var(--muted); font-size: 13px; }
 .header-actions, .quick-add { display: flex; align-items: center; gap: 10px; }
 .quick-add { padding-right: 10px; border-right: 1px solid var(--line); }
-.quick-add input { width: 112px; height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 0 11px; background: #fff; color: var(--ink); }
+.quick-add input { width: 180px; height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 0 11px; background: #fff; color: var(--ink); }
 
 main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 
@@ -186,6 +186,15 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 .dialog-shell.compact { max-width: 440px; }
 .dialog-head { display: flex; align-items: center; justify-content: space-between; }
 .dialog-note { margin-top: 14px; color: var(--muted); }
+.lookup-hint { margin-top: 16px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.lookup-candidates { display: grid; gap: 8px; max-height: 250px; margin-top: 10px; overflow-y: auto; }
+.candidate-button { display: grid; grid-template-columns: 82px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 10px 12px; border: 1px solid #d4e1e4; border-radius: 7px; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+.candidate-button:hover, .candidate-button:focus-visible { border-color: #6fa8b8; box-shadow: 0 3px 10px rgba(24, 74, 85, .11); outline: 0; }
+.candidate-button.selected { border-color: #347f92; box-shadow: inset 4px 0 0 #347f92; background: #f3f9fa; }
+.candidate-button.exists { cursor: not-allowed; opacity: .58; }
+.candidate-button span { color: #2d788d; font-weight: 900; }
+.candidate-button strong { min-width: 0; overflow-wrap: anywhere; }
+.candidate-button small { color: var(--muted); font-weight: 800; }
 .lookup-result { display: flex; align-items: center; gap: 13px; margin-top: 18px; padding: 14px; border: 1px solid #cfe0e4; border-left: 4px solid #438ba1; border-radius: 7px; background: #f5fafb; }
 .lookup-result > div { display: grid; gap: 3px; min-width: 0; }
 .lookup-result strong { overflow-wrap: anywhere; }
@@ -218,6 +227,8 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
   .header-actions { align-items: stretch; flex-wrap: wrap; justify-content: flex-end; }
   .quick-add { width: 100%; padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--line); }
   .quick-add input { flex: 1; min-width: 0; }
+  .candidate-button { grid-template-columns: 72px minmax(0, 1fr); }
+  .candidate-button small { grid-column: 2; }
   .header-actions .button { min-height: 36px; padding: 6px 10px; font-size: 13px; }
   main { width: min(100% - 20px, 1440px); margin-top: 12px; }
   .overview { grid-template-columns: repeat(2, 1fr); }

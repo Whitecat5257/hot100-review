@@ -22,7 +22,7 @@
     <div class="header-actions">
       <div class="quick-add">
         <label for="newProblemIdInput" class="sr-only">力扣题号</label>
-        <input id="newProblemIdInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="力扣题号" autocomplete="off">
+        <input id="newProblemIdInput" type="text" placeholder="题号，如 30 / LCP 30" autocomplete="off">
         <button id="lookupProblemButton" class="button secondary" type="button">录入新题</button>
       </div>
       <button id="dataButton" class="button secondary" type="button">数据</button>
@@ -101,7 +101,9 @@
         <div><p class="eyebrow">NEW PROBLEM</p><h2>录入补充题目</h2></div>
         <button id="closeAddProblemButton" class="icon-button" type="button" aria-label="关闭">×</button>
       </div>
-      <div class="lookup-result">
+      <p id="lookupHint" class="lookup-hint"></p>
+      <div id="lookupCandidates" class="lookup-candidates" aria-label="匹配到的题目"></div>
+      <div id="lookupResult" class="lookup-result hidden" aria-live="polite">
         <span id="lookupProblemNumber" class="lookup-number"></span>
         <div><strong id="lookupProblemTitle"></strong><small id="lookupProblemDifficulty"></small></div>
       </div>
@@ -116,7 +118,7 @@
       <p class="dialog-note">题目资料来自内置的力扣公开题目索引；进度仍只保存在你的浏览器中。</p>
       <div class="confirm-actions">
         <button id="cancelAddProblemButton" class="button secondary" type="button">取消</button>
-        <button class="button primary" type="submit">加入题库</button>
+        <button id="confirmAddProblemButton" class="button primary" type="submit" disabled>加入题库</button>
       </div>
     </form>
   </dialog>
