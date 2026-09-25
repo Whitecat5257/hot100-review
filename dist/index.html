@@ -110,6 +110,7 @@
       <label class="form-field">
         <span>所属专题</span>
         <select id="newProblemCategory" required></select>
+        <small id="categoryRecommendation" class="category-recommendation">选择题目后将自动推荐专题。</small>
       </label>
       <label class="form-field">
         <span>中文题名（选填）</span>
@@ -121,6 +122,18 @@
         <button id="confirmAddProblemButton" class="button primary" type="submit" disabled>加入题库</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="deleteProblemDialog" class="confirm-dialog">
+    <div class="dialog-shell compact">
+      <h2>删除补充题目？</h2>
+      <p id="deleteProblemName" class="delete-problem-name"></p>
+      <p>该题的完成日期、掌握程度和备注也会删除。删除前会在当前浏览器中自动保留一份快照。</p>
+      <div class="confirm-actions">
+        <button id="cancelDeleteProblemButton" class="button secondary" type="button">取消</button>
+        <button id="confirmDeleteProblemButton" class="button danger" type="button">确认删除</button>
+      </div>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

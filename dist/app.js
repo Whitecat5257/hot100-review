@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "hot100-review-studio-progress-v1";
   const PRE_IMPORT_BACKUP_KEY = "hot100-review-studio-pre-import-backup-v1";
+  const PRE_DELETE_BACKUP_KEY = "hot100-review-studio-pre-delete-backup-v1";
   const CUSTOM_PROBLEMS_KEY = "hot100-review-studio-custom-problems-v1";
   const CORE_ROUNDS = 5;
   const FIXED_DELAYS = [1, 4, 10, 21];
@@ -17,7 +18,13 @@
   const leetcodeCatalog = (Array.isArray(window.LEETCODE_CATALOG)
     ? window.LEETCODE_CATALOG
     : Object.entries(window.LEETCODE_CATALOG || {}).map(([id, item]) => [id, ...item]))
-    .map(([id, title, slug, level]) => ({ id: String(id), title: String(title), slug: String(slug), level: Number(level) }))
+    .map(([id, title, slug, level, category]) => ({
+      id: String(id),
+      title: String(title),
+      slug: String(slug),
+      level: Number(level),
+      category: baseCategories.includes(category) ? category : baseCategories[0]
+    }))
     .filter((item) => item.id && item.title && item.slug);
   const baseProblems = baseGroups.flatMap(([category, items]) => items.map((item, index) => ({
     category,
@@ -60,6 +67,7 @@
     addProblemDialog: document.querySelector("#addProblemDialog"),
     addProblemForm: document.querySelector("#addProblemForm"),
     newProblemCategory: document.querySelector("#newProblemCategory"),
+    categoryRecommendation: document.querySelector("#categoryRecommendation"),
     newProblemChineseTitle: document.querySelector("#newProblemChineseTitle"),
     lookupHint: document.querySelector("#lookupHint"),
     lookupCandidates: document.querySelector("#lookupCandidates"),
@@ -68,6 +76,8 @@
     lookupProblemTitle: document.querySelector("#lookupProblemTitle"),
     lookupProblemDifficulty: document.querySelector("#lookupProblemDifficulty"),
     confirmAddProblemButton: document.querySelector("#confirmAddProblemButton"),
+    deleteProblemDialog: document.querySelector("#deleteProblemDialog"),
+    deleteProblemName: document.querySelector("#deleteProblemName"),
     toast: document.querySelector("#toast")
   };
 
@@ -75,6 +85,7 @@
   let toastTimer = 0;
   let pendingProblem = null;
   let pendingMatches = [];
+  let pendingDeleteProblemId = "";
 
   function todayISO() {
     const date = new Date();
@@ -359,6 +370,11 @@
     const displayOrder = problem.isCustom ? `补${problem.customOrder}` : problem.order;
     const englishTitle = problem.en ? `<div class="problem-en">${escapeHtml(problem.en)}</div>` : "";
     const customBadge = problem.isCustom ? `<span class="custom-badge">补充</span>` : "";
+    const customActions = problem.isCustom ? `
+      <div class="custom-manage">
+        <label><span class="sr-only">调整 ${escapeHtml(problem.id)} 的专题</span><select data-action="custom-category" aria-label="调整 ${escapeHtml(problem.id)} 的专题">${baseCategories.map((category) => `<option value="${escapeHtml(category)}"${category === problem.category ? " selected" : ""}>${escapeHtml(category)}</option>`).join("")}</select></label>
+        <button class="delete-problem-button" type="button" data-action="delete-custom" aria-label="删除 ${escapeHtml(problem.id)}">删除</button>
+      </div>` : "";
     return `
       <tr data-problem-id="${escapeHtml(problem.id)}" class="problem-row ${visualClass}">
         <td class="col-order">${displayOrder}</td>
@@ -366,7 +382,7 @@
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
         <td class="col-next"><div class="${nextClass}"><span>${escapeHtml(info.text)}</span>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
-        <td class="col-note"><input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意"></td>
+        <td class="col-note"><input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意">${customActions}</td>
       </tr>`;
   }
 
@@ -431,7 +447,7 @@
 
   function backupPayload() {
     return {
-      version: 3,
+      version: 4,
       app: "hot100-review-studio",
       exportedAt: new Date().toISOString(),
       reviewPolicy: { fixedDelays: FIXED_DELAYS, adaptiveAfterRound: CORE_ROUNDS, ratings: RATINGS },
@@ -522,7 +538,8 @@
       id: candidate.id,
       title: candidate.title,
       slug: candidate.slug,
-      difficulty: difficultyFromLevel(candidate.level)
+      difficulty: difficultyFromLevel(candidate.level),
+      category: candidate.category
     };
     els.lookupCandidates.querySelectorAll(".candidate-button").forEach((button, buttonIndex) => {
       button.classList.toggle("selected", buttonIndex === index);
@@ -531,6 +548,8 @@
     els.lookupProblemNumber.textContent = pendingProblem.id;
     els.lookupProblemTitle.textContent = pendingProblem.title;
     els.lookupProblemDifficulty.textContent = difficultyText(pendingProblem.difficulty);
+    els.newProblemCategory.value = pendingProblem.category;
+    els.categoryRecommendation.textContent = `已根据力扣算法标签推荐“${pendingProblem.category}”，加入后仍可调整。`;
     els.lookupResult.classList.remove("hidden");
     els.confirmAddProblemButton.disabled = false;
   }
@@ -542,7 +561,7 @@
     els.lookupCandidates.innerHTML = matches.map((item, index) => {
       const exists = hasProblemId(item.id);
       return `<button class="candidate-button${exists ? " exists" : ""}" type="button" data-candidate-index="${index}" ${exists ? "disabled" : ""} aria-pressed="false">
-        <span>${escapeHtml(item.id)}</span><strong>${escapeHtml(item.title)}</strong><small>${difficultyText(difficultyFromLevel(item.level))}${exists ? " · 已在题库" : ""}</small>
+        <span>${escapeHtml(item.id)}</span><strong>${escapeHtml(item.title)}</strong><small>${difficultyText(difficultyFromLevel(item.level))} · 推荐 ${escapeHtml(item.category)}${exists ? " · 已在题库" : ""}</small>
       </button>`;
     }).join("");
   }
@@ -564,7 +583,8 @@
     els.lookupResult.classList.add("hidden");
     els.confirmAddProblemButton.disabled = true;
     els.newProblemChineseTitle.value = "";
-    els.newProblemCategory.value = els.categoryFilter.value !== "all" ? els.categoryFilter.value : baseCategories[0];
+    els.newProblemCategory.value = baseCategories[0];
+    els.categoryRecommendation.textContent = "选择题目后将自动推荐专题。";
     renderLookupCandidates(matches);
     els.addProblemDialog.showModal();
     if (matches.length === 1 && !hasProblemId(matches[0].id)) selectLookupCandidate(0);
@@ -591,6 +611,39 @@
     showToast(`已加入 ${pendingProblem.id}. ${chineseTitle || pendingProblem.title}`);
     pendingProblem = null;
     pendingMatches = [];
+  }
+
+  function updateCustomProblemCategory(problemId, category) {
+    const problem = customProblems.find((item) => problemIdKey(item.id) === problemIdKey(problemId));
+    if (!problem || !baseCategories.includes(category) || problem.category === category) return;
+    problem.category = category;
+    saveCustomProblems();
+    refreshProblemCatalog();
+    render();
+    showToast(`${problem.id} 已调整到“${category}”`);
+  }
+
+  function requestDeleteCustomProblem(problemId) {
+    const problem = customProblems.find((item) => problemIdKey(item.id) === problemIdKey(problemId));
+    if (!problem) return;
+    pendingDeleteProblemId = problem.id;
+    els.deleteProblemName.textContent = `${problem.id}. ${problem.cn}`;
+    els.deleteProblemDialog.showModal();
+  }
+
+  function deletePendingCustomProblem() {
+    const problem = customProblems.find((item) => problemIdKey(item.id) === problemIdKey(pendingDeleteProblemId));
+    if (!problem) return;
+    localStorage.setItem(PRE_DELETE_BACKUP_KEY, JSON.stringify(backupPayload()));
+    customProblems = customProblems.filter((item) => problemIdKey(item.id) !== problemIdKey(problem.id));
+    delete state[problem.id];
+    saveCustomProblems();
+    saveState();
+    refreshProblemCatalog();
+    render();
+    els.deleteProblemDialog.close();
+    showToast(`已删除 ${problem.id}. ${problem.cn}`);
+    pendingDeleteProblemId = "";
   }
 
   function registerWebMcpTools() {
@@ -665,6 +718,11 @@
   }
 
   els.problemGroups.addEventListener("click", (event) => {
+    const deleteButton = event.target.closest('[data-action="delete-custom"]');
+    if (deleteButton) {
+      requestDeleteCustomProblem(deleteButton.closest("tr[data-problem-id]")?.dataset.problemId || "");
+      return;
+    }
     const button = event.target.closest('[data-action="pick-date"]');
     if (!button) return;
     const row = button.closest("tr[data-problem-id]");
@@ -678,6 +736,7 @@
     const round = Number(event.target.dataset.round);
     if (event.target.matches('[data-action="date-input"]')) updateRoundDate(row.dataset.problemId, round, normalizeDate(event.target.value));
     if (event.target.matches('[data-action="set-rating"]')) updateRating(row.dataset.problemId, round, event.target.value);
+    if (event.target.matches('[data-action="custom-category"]')) updateCustomProblemCategory(row.dataset.problemId, event.target.value);
   });
 
   els.problemGroups.addEventListener("input", (event) => {
@@ -698,6 +757,8 @@
   els.addProblemForm.addEventListener("submit", (event) => { event.preventDefault(); addPendingProblem(); });
   document.querySelector("#closeAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
   document.querySelector("#cancelAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
+  document.querySelector("#cancelDeleteProblemButton").addEventListener("click", () => { pendingDeleteProblemId = ""; els.deleteProblemDialog.close(); });
+  document.querySelector("#confirmDeleteProblemButton").addEventListener("click", deletePendingCustomProblem);
   document.querySelector("#dataButton").addEventListener("click", () => { els.dataMessage.textContent = ""; els.dataDialog.showModal(); });
   document.querySelector("#exportButton").addEventListener("click", () => downloadBackup());
   document.querySelector("#dialogExportButton").addEventListener("click", () => downloadBackup());
