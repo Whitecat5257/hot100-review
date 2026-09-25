@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "hot100-review-studio-progress-v1";
   const PRE_IMPORT_BACKUP_KEY = "hot100-review-studio-pre-import-backup-v1";
+  const CUSTOM_PROBLEMS_KEY = "hot100-review-studio-custom-problems-v1";
   const CORE_ROUNDS = 5;
   const FIXED_DELAYS = [1, 4, 10, 21];
   const RATINGS = {
@@ -11,22 +12,32 @@
     none: { label: "完全没思路", short: "完全没思路 · 1天", days: 1 }
   };
 
-  const groups = Array.isArray(window.QUESTION_GROUPS) ? window.QUESTION_GROUPS : [];
-  const problems = groups.flatMap(([category, items]) => items.map((item, index) => ({
+  const baseGroups = Array.isArray(window.QUESTION_GROUPS) ? window.QUESTION_GROUPS : [];
+  const baseCategories = baseGroups.map(([category]) => category);
+  const leetcodeCatalog = window.LEETCODE_CATALOG || {};
+  const baseProblems = baseGroups.flatMap(([category, items]) => items.map((item, index) => ({
     category,
     categoryOrder: index + 1,
     id: String(item[0]),
     cn: item[1],
     en: item[2],
     difficulty: item[3],
-    slug: item[4]
+    slug: item[4],
+    isCustom: false
   }))).map((problem, index) => ({ ...problem, order: index + 1 }));
-  const validIds = new Set(problems.map((problem) => problem.id));
+  const baseIds = new Set(baseProblems.map((problem) => problem.id));
+  let customProblems = loadCustomProblems();
+  let groups = baseGroups;
+  let problems = [];
+  let validIds = new Set();
+  refreshProblemCatalog();
 
   const els = {
     todayLabel: document.querySelector("#todayLabel"),
     startedMetric: document.querySelector("#startedMetric"),
+    startedTotal: document.querySelector("#startedTotal"),
     coreMetric: document.querySelector("#coreMetric"),
+    coreTotal: document.querySelector("#coreTotal"),
     attemptMetric: document.querySelector("#attemptMetric"),
     dueMetric: document.querySelector("#dueMetric"),
     progressText: document.querySelector("#progressText"),
@@ -41,11 +52,20 @@
     clearDialog: document.querySelector("#clearDialog"),
     fileInput: document.querySelector("#fileInput"),
     dataMessage: document.querySelector("#dataMessage"),
+    newProblemIdInput: document.querySelector("#newProblemIdInput"),
+    addProblemDialog: document.querySelector("#addProblemDialog"),
+    addProblemForm: document.querySelector("#addProblemForm"),
+    newProblemCategory: document.querySelector("#newProblemCategory"),
+    newProblemChineseTitle: document.querySelector("#newProblemChineseTitle"),
+    lookupProblemNumber: document.querySelector("#lookupProblemNumber"),
+    lookupProblemTitle: document.querySelector("#lookupProblemTitle"),
+    lookupProblemDifficulty: document.querySelector("#lookupProblemDifficulty"),
     toast: document.querySelector("#toast")
   };
 
   let state = loadState();
   let toastTimer = 0;
+  let pendingProblem = null;
 
   function todayISO() {
     const date = new Date();
@@ -84,6 +104,57 @@
       .replace(/'/g, "&#039;");
   }
 
+  function normalizeCustomProblem(raw) {
+    const id = String(raw?.id || "").trim();
+    const category = String(raw?.category || "");
+    const difficulty = ["Easy", "Medium", "Hard"].includes(raw?.difficulty) ? raw.difficulty : "Medium";
+    if (!/^\d+$/.test(id) || baseIds.has(id) || !baseCategories.includes(category)) return null;
+    if (!raw?.slug || (!raw?.cn && !raw?.en)) return null;
+    return {
+      id,
+      cn: String(raw.cn || raw.en).trim(),
+      en: String(raw.en || "").trim(),
+      slug: String(raw.slug).trim(),
+      difficulty,
+      category,
+      addedAt: String(raw.addedAt || ""),
+      isCustom: true
+    };
+  }
+
+  function normalizeCustomProblems(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set();
+    return raw.map(normalizeCustomProblem).filter((problem) => {
+      if (!problem || seen.has(problem.id)) return false;
+      seen.add(problem.id);
+      return true;
+    });
+  }
+
+  function loadCustomProblems() {
+    try {
+      return normalizeCustomProblems(JSON.parse(localStorage.getItem(CUSTOM_PROBLEMS_KEY) || "[]"));
+    } catch {
+      return [];
+    }
+  }
+
+  function saveCustomProblems() {
+    localStorage.setItem(CUSTOM_PROBLEMS_KEY, JSON.stringify(customProblems));
+  }
+
+  function refreshProblemCatalog() {
+    const categoryCounts = new Map();
+    const extras = customProblems.map((problem) => {
+      const customOrder = (categoryCounts.get(problem.category) || 0) + 1;
+      categoryCounts.set(problem.category, customOrder);
+      return { ...problem, customOrder };
+    });
+    problems = [...baseProblems, ...extras];
+    validIds = new Set(problems.map((problem) => problem.id));
+  }
+
   function normalizeRecord(raw = {}) {
     const sourceRounds = Array.isArray(raw.rounds) ? raw.rounds : [];
     const sourceDates = Array.isArray(raw.dates) ? raw.dates : [];
@@ -95,11 +166,11 @@
     return { rounds, dates, ratings, note: typeof raw.note === "string" ? raw.note : "" };
   }
 
-  function normalizeProgress(rawProgress) {
+  function normalizeProgress(rawProgress, allowedIds = validIds) {
     const normalized = {};
     if (!rawProgress || typeof rawProgress !== "object" || Array.isArray(rawProgress)) return normalized;
     Object.entries(rawProgress).forEach(([id, record]) => {
-      if (validIds.has(String(id))) normalized[String(id)] = normalizeRecord(record);
+      if (allowedIds.has(String(id))) normalized[String(id)] = normalizeRecord(record);
     });
     return normalized;
   }
@@ -187,7 +258,9 @@
     const due = problems.filter((problem) => reviewInfo(problem).due).length;
     const percent = Math.round(coreChecks / (problems.length * CORE_ROUNDS) * 100) || 0;
     els.startedMetric.textContent = started;
+    els.startedTotal.textContent = problems.length;
     els.coreMetric.textContent = coreDone;
+    els.coreTotal.textContent = problems.length;
     els.attemptMetric.textContent = attempts;
     els.dueMetric.textContent = due;
     els.progressText.textContent = `${percent}%`;
@@ -264,10 +337,13 @@
         : completed > CORE_ROUNDS
           ? "选择掌握程度后生成"
           : "";
+    const displayOrder = problem.isCustom ? `补${problem.customOrder}` : problem.order;
+    const englishTitle = problem.en ? `<div class="problem-en">${escapeHtml(problem.en)}</div>` : "";
+    const customBadge = problem.isCustom ? `<span class="custom-badge">补充</span>` : "";
     return `
       <tr data-problem-id="${problem.id}" class="problem-row ${visualClass}">
-        <td class="col-order">${problem.order}</td>
-        <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener"><span>${problem.id}</span> ${escapeHtml(problem.cn)}</a><div class="problem-en">${escapeHtml(problem.en)}</div></td>
+        <td class="col-order">${displayOrder}</td>
+        <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener"><span>${problem.id}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
         <td class="col-next"><div class="${nextClass}"><span>${escapeHtml(info.text)}</span>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
@@ -283,13 +359,16 @@
       if (!filtered.length) return "";
       rendered += filtered.length;
       const started = categoryProblems.filter((problem) => completedRounds(getRecord(problem.id)) > 0).length;
+      const standardRows = filtered.filter((problem) => !problem.isCustom).map(renderProblemRow).join("");
+      const customRows = filtered.filter((problem) => problem.isCustom).map(renderProblemRow).join("");
+      const customDivider = customRows ? `<tr class="custom-divider"><td colspan="6"><span>补充题目</span></td></tr>` : "";
       return `
         <section class="category-section">
           <div class="category-head"><h3>${escapeHtml(category)}</h3><span>${started}/${categoryProblems.length} 题已开始</span></div>
           <div class="table-wrap">
             <table class="problem-table">
               <thead><tr><th class="col-order">顺序</th><th class="col-problem">题目</th><th class="col-level">难度</th><th class="col-dates">完成日期与掌握程度</th><th class="col-next">建议复习</th><th class="col-note">备注</th></tr></thead>
-              <tbody>${filtered.map(renderProblemRow).join("")}</tbody>
+              <tbody>${standardRows}${customDivider}${customRows}</tbody>
             </table>
           </div>
         </section>`;
@@ -333,10 +412,11 @@
 
   function backupPayload() {
     return {
-      version: 2,
+      version: 3,
       app: "hot100-review-studio",
       exportedAt: new Date().toISOString(),
       reviewPolicy: { fixedDelays: FIXED_DELAYS, adaptiveAfterRound: CORE_ROUNDS, ratings: RATINGS },
+      customProblems,
       progress: state
     };
   }
@@ -354,9 +434,22 @@
   async function importFile(file) {
     try {
       const payload = JSON.parse(await file.text());
-      const imported = normalizeProgress(payload.progress || payload);
-      if (!Object.keys(imported).length) throw new Error("文件中没有可识别的 Hot 100 记录");
+      const importedCustomProblems = Array.isArray(payload.customProblems)
+        ? normalizeCustomProblems(payload.customProblems)
+        : null;
+      const importIds = importedCustomProblems
+        ? new Set([...baseIds, ...importedCustomProblems.map((problem) => problem.id)])
+        : validIds;
+      const imported = normalizeProgress(payload.progress || payload, importIds);
+      if (!Object.keys(imported).length && !importedCustomProblems?.length) {
+        throw new Error("文件中没有可识别的题目记录");
+      }
       localStorage.setItem(PRE_IMPORT_BACKUP_KEY, JSON.stringify(backupPayload()));
+      if (Array.isArray(payload.customProblems)) {
+        customProblems = importedCustomProblems;
+        saveCustomProblems();
+        refreshProblemCatalog();
+      }
       state = imported;
       saveState();
       render();
@@ -375,6 +468,62 @@
     els.toast.textContent = message;
     els.toast.classList.add("show");
     toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+  }
+
+  function difficultyFromLevel(level) {
+    return Number(level) === 1 ? "Easy" : Number(level) === 3 ? "Hard" : "Medium";
+  }
+
+  function lookupNewProblem() {
+    const id = els.newProblemIdInput.value.trim();
+    if (!/^\d+$/.test(id)) {
+      showToast("请输入正确的力扣题号");
+      els.newProblemIdInput.focus();
+      return;
+    }
+    if (validIds.has(id)) {
+      showToast("这道题已经在题库中了");
+      return;
+    }
+    const metadata = leetcodeCatalog[id];
+    if (!Array.isArray(metadata)) {
+      showToast("暂未在力扣公开题库中找到该题号");
+      return;
+    }
+    pendingProblem = {
+      id,
+      title: metadata[0],
+      slug: metadata[1],
+      difficulty: difficultyFromLevel(metadata[2])
+    };
+    els.lookupProblemNumber.textContent = `#${id}`;
+    els.lookupProblemTitle.textContent = pendingProblem.title;
+    els.lookupProblemDifficulty.textContent = difficultyText(pendingProblem.difficulty);
+    els.newProblemChineseTitle.value = "";
+    els.newProblemCategory.value = els.categoryFilter.value !== "all" ? els.categoryFilter.value : baseCategories[0];
+    els.addProblemDialog.showModal();
+  }
+
+  function addPendingProblem() {
+    if (!pendingProblem) return;
+    const chineseTitle = els.newProblemChineseTitle.value.trim();
+    customProblems.push({
+      id: pendingProblem.id,
+      cn: chineseTitle || pendingProblem.title,
+      en: chineseTitle ? pendingProblem.title : "",
+      slug: pendingProblem.slug,
+      difficulty: pendingProblem.difficulty,
+      category: els.newProblemCategory.value,
+      addedAt: new Date().toISOString(),
+      isCustom: true
+    });
+    saveCustomProblems();
+    refreshProblemCatalog();
+    render();
+    els.addProblemDialog.close();
+    els.newProblemIdInput.value = "";
+    showToast(`已加入 ${pendingProblem.id}. ${chineseTitle || pendingProblem.title}`);
+    pendingProblem = null;
   }
 
   function registerWebMcpTools() {
@@ -444,6 +593,7 @@
       option.value = category;
       option.textContent = category;
       els.categoryFilter.appendChild(option);
+      els.newProblemCategory.appendChild(option.cloneNode(true));
     });
   }
 
@@ -472,6 +622,11 @@
 
   [els.searchInput, els.categoryFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
+  document.querySelector("#lookupProblemButton").addEventListener("click", lookupNewProblem);
+  els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") lookupNewProblem(); });
+  els.addProblemForm.addEventListener("submit", (event) => { event.preventDefault(); addPendingProblem(); });
+  document.querySelector("#closeAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
+  document.querySelector("#cancelAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
   document.querySelector("#dataButton").addEventListener("click", () => { els.dataMessage.textContent = ""; els.dataDialog.showModal(); });
   document.querySelector("#exportButton").addEventListener("click", () => downloadBackup());
   document.querySelector("#dialogExportButton").addEventListener("click", () => downloadBackup());

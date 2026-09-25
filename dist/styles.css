@@ -59,7 +59,9 @@ h2 { font-size: 22px; }
 h3 { font-size: 18px; }
 .eyebrow { color: var(--teal); font-size: 12px; font-weight: 900; letter-spacing: .13em; }
 .today-label { margin-top: 4px; color: var(--muted); font-size: 13px; }
-.header-actions { display: flex; gap: 10px; }
+.header-actions, .quick-add { display: flex; align-items: center; gap: 10px; }
+.quick-add { padding-right: 10px; border-right: 1px solid var(--line); }
+.quick-add input { width: 112px; height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 0 11px; background: #fff; color: var(--ink); }
 
 main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 
@@ -123,7 +125,8 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .problem-table { width: 100%; min-width: 1120px; border-collapse: collapse; table-layout: fixed; }
 .problem-table th { padding: 10px 12px; color: var(--muted); font-size: 12px; text-align: left; background: #fbfdfd; }
 .problem-table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: middle; }
-.problem-row { background: #fff; transition: background-color .2s ease; }
+.problem-row { position: relative; background: #fff; outline: 1px solid transparent; outline-offset: -1px; transition: box-shadow .18s ease, outline-color .18s ease; }
+.problem-row:hover, .problem-row:focus-within { z-index: 1; outline-color: #6fa8b8; box-shadow: inset 4px 0 0 #2f8295, 0 5px 14px rgba(24, 74, 85, .13); }
 
 /* Five calm green steps for the fixed review rounds. */
 .problem-row.state-core.core-1 { background: #f5fbf7; }
@@ -153,6 +156,9 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .problem-link { display: block; color: var(--ink); font-size: 14px; font-weight: 900; text-decoration: none; }
 .problem-link:hover { color: var(--teal); }
 .problem-en { margin-top: 2px; color: var(--muted); font-size: 12px; }
+.custom-badge { display: inline-flex; margin-left: 5px; padding: 2px 5px; border: 1px solid #9bc6d3; border-radius: 4px; background: #edf7fa; color: #276f82; font-size: 10px; vertical-align: 1px; }
+.custom-divider td { height: 28px; padding: 0 14px; border-top: 4px solid #4c92aa; background: #f4f9fb; }
+.custom-divider span { display: inline-block; transform: translateY(-1px); padding-right: 8px; background: #f4f9fb; color: #39798e; font-size: 11px; font-weight: 900; }
 .difficulty { display: inline-flex; padding: 4px 8px; border-radius: 99px; font-size: 12px; font-weight: 900; }
 .difficulty.easy { background: var(--green-soft); color: var(--green); }
 .difficulty.medium { background: #fff1d6; color: #a56400; }
@@ -180,6 +186,13 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 .dialog-shell.compact { max-width: 440px; }
 .dialog-head { display: flex; align-items: center; justify-content: space-between; }
 .dialog-note { margin-top: 14px; color: var(--muted); }
+.lookup-result { display: flex; align-items: center; gap: 13px; margin-top: 18px; padding: 14px; border: 1px solid #cfe0e4; border-left: 4px solid #438ba1; border-radius: 7px; background: #f5fafb; }
+.lookup-result > div { display: grid; gap: 3px; min-width: 0; }
+.lookup-result strong { overflow-wrap: anywhere; }
+.lookup-result small { color: var(--muted); font-weight: 800; }
+.lookup-number { color: #2d788d; font-size: 18px; font-weight: 900; }
+.form-field { display: grid; gap: 7px; margin-top: 16px; color: var(--muted); font-size: 13px; font-weight: 800; }
+.form-field input, .form-field select { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; background: #fff; color: var(--ink); }
 .data-actions { display: grid; gap: 10px; margin-top: 20px; }
 .data-message { min-height: 24px; margin-top: 12px; color: var(--teal); font-size: 13px; font-weight: 800; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
@@ -201,7 +214,10 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 @media (max-width: 700px) {
   .app-header { position: static; align-items: flex-start; padding: 14px 16px; }
   .brand-mark { width: 45px; height: 45px; font-size: 15px; }
-  .header-actions { flex-direction: column; }
+  .app-header { gap: 12px; }
+  .header-actions { align-items: stretch; flex-wrap: wrap; justify-content: flex-end; }
+  .quick-add { width: 100%; padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .quick-add input { flex: 1; min-width: 0; }
   .header-actions .button { min-height: 36px; padding: 6px 10px; font-size: 13px; }
   main { width: min(100% - 20px, 1440px); margin-top: 12px; }
   .overview { grid-template-columns: repeat(2, 1fr); }
