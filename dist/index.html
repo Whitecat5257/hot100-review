@@ -21,9 +21,9 @@
     </div>
     <div class="header-actions">
       <div class="quick-add">
-        <label for="newProblemIdInput" class="sr-only">力扣题号</label>
-        <input id="newProblemIdInput" type="text" placeholder="题号，如 30 / LCP 30" autocomplete="off">
-        <button id="lookupProblemButton" class="button secondary" type="button">录入新题</button>
+        <label for="newProblemIdInput" class="sr-only">搜索力扣题号</label>
+        <input id="newProblemIdInput" type="text" placeholder="搜索题号，如 207 / LCP 30" autocomplete="off">
+        <button id="lookupProblemButton" class="button secondary" type="button">搜索</button>
       </div>
       <button id="dataButton" class="button secondary" type="button">数据</button>
       <button id="exportButton" class="button primary" type="button">导出备份</button>
@@ -122,6 +122,18 @@
         <button id="confirmAddProblemButton" class="button primary" type="submit" disabled>加入题库</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="missingProblemDialog" class="confirm-dialog">
+    <div class="dialog-shell compact">
+      <h2>题库中还没有这道题</h2>
+      <p id="missingProblemMessage" class="missing-problem-message"></p>
+      <p>要现在把它加入你的复习题库吗？</p>
+      <div class="confirm-actions">
+        <button id="cancelMissingProblemButton" class="button secondary" type="button">暂不录入</button>
+        <button id="confirmMissingProblemButton" class="button primary" type="button">去录入</button>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="deleteProblemDialog" class="confirm-dialog">

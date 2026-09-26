@@ -76,6 +76,8 @@
     lookupProblemTitle: document.querySelector("#lookupProblemTitle"),
     lookupProblemDifficulty: document.querySelector("#lookupProblemDifficulty"),
     confirmAddProblemButton: document.querySelector("#confirmAddProblemButton"),
+    missingProblemDialog: document.querySelector("#missingProblemDialog"),
+    missingProblemMessage: document.querySelector("#missingProblemMessage"),
     deleteProblemDialog: document.querySelector("#deleteProblemDialog"),
     deleteProblemName: document.querySelector("#deleteProblemName"),
     toast: document.querySelector("#toast")
@@ -85,6 +87,7 @@
   let toastTimer = 0;
   let pendingProblem = null;
   let pendingMatches = [];
+  let pendingMissingMatches = [];
   let pendingDeleteProblemId = "";
 
   function todayISO() {
@@ -376,7 +379,7 @@
         <button class="delete-problem-button" type="button" data-action="delete-custom" aria-label="删除 ${escapeHtml(problem.id)}">删除</button>
       </div>` : "";
     return `
-      <tr data-problem-id="${escapeHtml(problem.id)}" class="problem-row ${visualClass}">
+      <tr data-problem-id="${escapeHtml(problem.id)}" class="problem-row ${visualClass}" tabindex="-1">
         <td class="col-order">${displayOrder}</td>
         <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener"><span>${escapeHtml(problem.id)}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
@@ -531,6 +534,52 @@
     return leetcodeCatalog.filter((item) => problemIdKey(item.id) === key);
   }
 
+  function findLibraryProblem(query) {
+    const key = problemIdKey(query);
+    return problems.find((problem) => problemIdKey(problem.id) === key) || null;
+  }
+
+  function locateLibraryProblem(problem) {
+    els.searchInput.value = "";
+    els.categoryFilter.value = "all";
+    els.statusFilter.value = "all";
+    renderGroups();
+    requestAnimationFrame(() => {
+      const row = Array.from(els.problemGroups.querySelectorAll("tr[data-problem-id]"))
+        .find((item) => problemIdKey(item.dataset.problemId) === problemIdKey(problem.id));
+      if (!row) return;
+      row.classList.add("search-target");
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.focus({ preventScroll: true });
+      setTimeout(() => row.classList.remove("search-target"), 2200);
+      showToast(`已定位 ${problem.id}. ${problem.cn}`);
+    });
+  }
+
+  function searchProblemLibrary() {
+    const query = els.newProblemIdInput.value.trim();
+    if (!query) {
+      showToast("请输入力扣题号");
+      els.newProblemIdInput.focus();
+      return;
+    }
+    const existing = findLibraryProblem(query);
+    if (existing) {
+      locateLibraryProblem(existing);
+      return;
+    }
+    const matches = findCatalogMatches(query);
+    if (!matches.length) {
+      showToast("题库和力扣公开题目索引中都没有找到该题号");
+      return;
+    }
+    pendingMissingMatches = matches;
+    els.missingProblemMessage.textContent = matches.length === 1
+      ? `${matches[0].id}. ${matches[0].title}`
+      : `“${query}”对应 ${matches.length} 道力扣系列题，录入时可以选择正确题目。`;
+    els.missingProblemDialog.showModal();
+  }
+
   function selectLookupCandidate(index) {
     const candidate = pendingMatches[index];
     if (!candidate || hasProblemId(candidate.id)) return;
@@ -566,14 +615,14 @@
     }).join("");
   }
 
-  function lookupNewProblem() {
+  function lookupNewProblem(matchesOverride = null) {
     const query = els.newProblemIdInput.value.trim();
     if (!query) {
       showToast("请输入力扣题号");
       els.newProblemIdInput.focus();
       return;
     }
-    const matches = findCatalogMatches(query);
+    const matches = Array.isArray(matchesOverride) ? matchesOverride : findCatalogMatches(query);
     if (!matches.length) {
       showToast("暂未在力扣公开题库中找到该题号");
       return;
@@ -748,8 +797,8 @@
 
   [els.searchInput, els.categoryFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
-  document.querySelector("#lookupProblemButton").addEventListener("click", lookupNewProblem);
-  els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") lookupNewProblem(); });
+  document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
+  els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });
   els.lookupCandidates.addEventListener("click", (event) => {
     const button = event.target.closest("[data-candidate-index]");
     if (button) selectLookupCandidate(Number(button.dataset.candidateIndex));
@@ -757,6 +806,13 @@
   els.addProblemForm.addEventListener("submit", (event) => { event.preventDefault(); addPendingProblem(); });
   document.querySelector("#closeAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
   document.querySelector("#cancelAddProblemButton").addEventListener("click", () => els.addProblemDialog.close());
+  document.querySelector("#cancelMissingProblemButton").addEventListener("click", () => { pendingMissingMatches = []; els.missingProblemDialog.close(); });
+  document.querySelector("#confirmMissingProblemButton").addEventListener("click", () => {
+    const matches = pendingMissingMatches;
+    pendingMissingMatches = [];
+    els.missingProblemDialog.close();
+    lookupNewProblem(matches);
+  });
   document.querySelector("#cancelDeleteProblemButton").addEventListener("click", () => { pendingDeleteProblemId = ""; els.deleteProblemDialog.close(); });
   document.querySelector("#confirmDeleteProblemButton").addEventListener("click", deletePendingCustomProblem);
   document.querySelector("#dataButton").addEventListener("click", () => { els.dataMessage.textContent = ""; els.dataDialog.showModal(); });

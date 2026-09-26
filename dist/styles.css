@@ -127,6 +127,10 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .problem-table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: middle; }
 .problem-row { position: relative; background: #fff; outline: 1px solid transparent; outline-offset: -1px; transition: box-shadow .18s ease, outline-color .18s ease; }
 .problem-row:hover, .problem-row:focus-within { z-index: 1; outline-color: #6fa8b8; box-shadow: inset 4px 0 0 #2f8295, 0 5px 14px rgba(24, 74, 85, .13); }
+.problem-row.search-target { z-index: 2; outline: 3px solid #2f8295; outline-offset: -3px; box-shadow: inset 6px 0 0 #f27b4d, 0 8px 24px rgba(24, 74, 85, .22); animation: search-target-pulse .72s ease 2; }
+@keyframes search-target-pulse {
+  50% { outline-color: #71aeb9; box-shadow: inset 6px 0 0 #f27b4d, 0 10px 30px rgba(24, 74, 85, .3); }
+}
 
 /* Five calm green steps for the fixed review rounds. */
 .problem-row.state-core.core-1 { background: #f5fbf7; }
@@ -208,6 +212,7 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 .form-field { display: grid; gap: 7px; margin-top: 16px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .form-field input, .form-field select { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; background: #fff; color: var(--ink); }
 .category-recommendation { color: #39798e; font-size: 12px; line-height: 1.5; }
+.missing-problem-message { margin: 14px 0 6px; color: var(--ink); font-weight: 900; }
 .delete-problem-name { margin-top: 14px; color: var(--ink); font-weight: 900; }
 .data-actions { display: grid; gap: 10px; margin-top: 20px; }
 .data-message { min-height: 24px; margin-top: 12px; color: var(--teal); font-size: 13px; font-weight: 800; }
