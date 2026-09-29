@@ -45,7 +45,7 @@ const questions = listing.stat_status_pairs.map((item) => ({
   level: Number(item.difficulty.level)
 }));
 
-const tagsBySlug = new Map();
+const detailsBySlug = new Map();
 const batches = [];
 for (let start = 0; start < questions.length; start += BATCH_SIZE) {
   batches.push(questions.slice(start, start + BATCH_SIZE));
@@ -54,7 +54,7 @@ for (let start = 0; start < questions.length; start += BATCH_SIZE) {
 let completed = 0;
 async function fetchTagBatch(batch) {
   const fields = batch.map((question, index) =>
-    `q${index}: question(titleSlug: ${JSON.stringify(question.slug)}) { titleSlug topicTags { slug } }`
+    `q${index}: question(titleSlug: ${JSON.stringify(question.slug)}) { titleSlug translatedTitle topicTags { slug } }`
   ).join(" ");
   const result = await fetchJson(GRAPHQL_URL, {
     method: "POST",
@@ -62,7 +62,12 @@ async function fetchTagBatch(batch) {
     body: JSON.stringify({ query: `query { ${fields} }` })
   });
   for (const value of Object.values(result.data || {})) {
-    if (value?.titleSlug) tagsBySlug.set(value.titleSlug, (value.topicTags || []).map((tag) => tag.slug));
+    if (value?.titleSlug) {
+      detailsBySlug.set(value.titleSlug, {
+        translatedTitle: String(value.translatedTitle || "").trim(),
+        tags: (value.topicTags || []).map((tag) => tag.slug)
+      });
+    }
   }
   completed += batch.length;
   process.stdout.write(`\rFetched tags for ${completed}/${questions.length}`);
@@ -74,10 +79,10 @@ for (let start = 0; start < batches.length; start += 6) {
 
 const catalog = questions.map((question) => [
   question.id,
-  question.title,
+  detailsBySlug.get(question.slug)?.translatedTitle || question.title,
   question.slug,
   question.level,
-  recommendedCategory(tagsBySlug.get(question.slug) || [])
+  recommendedCategory(detailsBySlug.get(question.slug)?.tags || [])
 ]);
 
 await fs.writeFile(OUTPUT_URL, `window.LEETCODE_CATALOG = ${JSON.stringify(catalog)};\n`, "utf8");

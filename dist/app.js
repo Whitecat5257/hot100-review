@@ -26,6 +26,18 @@
       category: baseCategories.includes(category) ? category : baseCategories[0]
     }))
     .filter((item) => item.id && item.title && item.slug);
+  const catalogById = new Map(leetcodeCatalog.map((item) => [problemIdKey(item.id), item]));
+  const huaweiQuestions = (Array.isArray(window.HUAWEI_QUESTIONS) ? window.HUAWEI_QUESTIONS : [])
+    .map(([id, title, difficulty, frequency, passRate], index) => ({
+      id: String(id),
+      title: String(title),
+      difficulty: ["Easy", "Medium", "Hard"].includes(difficulty) ? difficulty : "Medium",
+      frequency: Math.max(1, Math.min(8, Number(frequency) || 1)),
+      passRate: Number(passRate) || 0,
+      sourceOrder: index + 1
+    }))
+    .filter((item) => item.id && item.title);
+  const huaweiById = new Map(huaweiQuestions.map((item) => [problemIdKey(item.id), item]));
   const baseProblems = baseGroups.flatMap(([category, items]) => items.map((item, index) => ({
     category,
     categoryOrder: index + 1,
@@ -34,9 +46,32 @@
     en: item[2],
     difficulty: item[3],
     slug: item[4],
-    isCustom: false
+    isCustom: false,
+    isSupplement: false,
+    ...huaweiMetadata(item[0])
   }))).map((problem, index) => ({ ...problem, order: index + 1 }));
   const baseIds = new Set(baseProblems.map((problem) => problem.id));
+  const huaweiSupplementProblems = huaweiQuestions
+    .filter((item) => !baseIds.has(item.id))
+    .map((item) => {
+      const catalogItem = catalogById.get(problemIdKey(item.id));
+      if (!catalogItem) return null;
+      return {
+        id: item.id,
+        cn: item.title,
+        en: "",
+        slug: catalogItem.slug,
+        difficulty: item.difficulty,
+        category: catalogItem.category,
+        isCustom: false,
+        isSupplement: true,
+        ...huaweiMetadata(item.id)
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.huaweiFrequency - a.huaweiFrequency || a.cn.localeCompare(b.cn, "zh-CN"));
+  const builtInIds = new Set([...baseIds, ...huaweiSupplementProblems.map((problem) => problem.id)]);
+  const builtInIdKeys = new Set([...builtInIds].map(problemIdKey));
   let customProblems = loadCustomProblems();
   let groups = baseGroups;
   let problems = [];
@@ -58,6 +93,7 @@
     emptyState: document.querySelector("#emptyState"),
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
+    sourceFilter: document.querySelector("#sourceFilter"),
     statusFilter: document.querySelector("#statusFilter"),
     dataDialog: document.querySelector("#dataDialog"),
     clearDialog: document.querySelector("#clearDialog"),
@@ -131,6 +167,35 @@
     return String(value || "").trim().toUpperCase().replace(/\s+/g, "");
   }
 
+  function huaweiTier(frequency) {
+    if (frequency >= 8) return { code: "S", label: "极高频" };
+    if (frequency >= 6) return { code: "A", label: "高频" };
+    if (frequency >= 4) return { code: "B", label: "常考" };
+    return { code: "C", label: "收录" };
+  }
+
+  function huaweiMetadata(id) {
+    const item = huaweiById.get(problemIdKey(id));
+    if (!item) return { isHuawei: false };
+    const tier = huaweiTier(item.frequency);
+    return {
+      isHuawei: true,
+      huaweiFrequency: item.frequency,
+      huaweiTier: tier.code,
+      huaweiTierLabel: tier.label,
+      huaweiPassRate: item.passRate,
+      huaweiSourceOrder: item.sourceOrder
+    };
+  }
+
+  function containsChinese(value) {
+    return /[\u3400-\u9fff]/.test(String(value || ""));
+  }
+
+  function catalogDisplayTitle(item) {
+    return containsChinese(item?.title) ? item.title : `力扣 ${item?.id || ""}（中文题名待补充）`;
+  }
+
   function hasProblemId(id) {
     const key = problemIdKey(id);
     return problems.some((problem) => problemIdKey(problem.id) === key);
@@ -140,7 +205,7 @@
     const id = String(raw?.id || "").trim();
     const category = String(raw?.category || "");
     const difficulty = ["Easy", "Medium", "Hard"].includes(raw?.difficulty) ? raw.difficulty : "Medium";
-    if (!id || id.length > 40 || baseIds.has(id) || !baseCategories.includes(category)) return null;
+    if (!id || id.length > 40 || builtInIdKeys.has(problemIdKey(id)) || !baseCategories.includes(category)) return null;
     if (!raw?.slug || (!raw?.cn && !raw?.en)) return null;
     return {
       id,
@@ -150,7 +215,9 @@
       difficulty,
       category,
       addedAt: String(raw.addedAt || ""),
-      isCustom: true
+      isCustom: true,
+      isSupplement: true,
+      isHuawei: false
     };
   }
 
@@ -179,12 +246,19 @@
 
   function refreshProblemCatalog() {
     const categoryCounts = new Map();
-    const extras = customProblems.map((problem) => {
-      const customOrder = (categoryCounts.get(problem.category) || 0) + 1;
-      categoryCounts.set(problem.category, customOrder);
-      return { ...problem, customOrder };
+    const withSupplementOrder = (problem) => {
+      const supplementOrder = (categoryCounts.get(problem.category) || 0) + 1;
+      categoryCounts.set(problem.category, supplementOrder);
+      return { ...problem, supplementOrder };
+    };
+    const huaweiExtras = huaweiSupplementProblems.map(withSupplementOrder);
+    const userExtras = customProblems.map((problem) => {
+      return withSupplementOrder(problem);
     });
-    problems = [...baseProblems, ...extras];
+    problems = [...baseProblems, ...huaweiExtras, ...userExtras].map((problem, index) => ({
+      ...problem,
+      order: problem.order || index + 1
+    }));
     validIds = new Set(problems.map((problem) => problem.id));
   }
 
@@ -309,7 +383,10 @@
     els.dueList.innerHTML = dueItems.length ? dueItems.slice(0, 6).map(({ problem, info }) => `
       <article class="due-card">
         <div>
-          <a href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener">${problem.id}. ${escapeHtml(problem.cn)}</a>
+          <div class="due-title-row">
+            <a href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener">${problem.id}. ${escapeHtml(problem.cn)}</a>
+            ${renderHuaweiBadge(problem, true)}
+          </div>
           <p>下一次：第 ${info.nextRound + 1} 次 · ${escapeHtml(problem.category)}</p>
         </div>
         <span class="due-date">${escapeHtml(info.text)}</span>
@@ -319,19 +396,24 @@
   function matchesFilters(problem) {
     const query = els.searchInput.value.trim().toLowerCase();
     const category = els.categoryFilter.value;
+    const source = els.sourceFilter.value;
     const status = els.statusFilter.value;
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
     const info = reviewInfo(problem);
-    const haystack = `${problem.id} ${problem.cn} ${problem.en} ${problem.category}`.toLowerCase();
+    const haystack = `${problem.id} ${problem.cn} ${problem.en} ${problem.category} ${problem.isHuawei ? `华为 ${problem.huaweiTier}级 ${problem.huaweiTierLabel}` : ""}`.toLowerCase();
     const queryMatch = !query || haystack.includes(query);
     const categoryMatch = category === "all" || category === problem.category;
+    const sourceMatch = source === "all"
+      || (source === "huawei" && problem.isHuawei)
+      || (source === "hot100" && !problem.isSupplement)
+      || (source === "custom" && problem.isCustom);
     const statusMatch = status === "all"
       || (status === "not-started" && completed === 0)
       || (status === "started" && completed > 0)
       || (status === "due" && info.due)
       || (status === "core-done" && completed >= CORE_ROUNDS);
-    return queryMatch && categoryMatch && statusMatch;
+    return queryMatch && categoryMatch && sourceMatch && statusMatch;
   }
 
   function rowVisualClass(record, info) {
@@ -356,6 +438,15 @@
     return `state-adaptive mastery-${ratingLevel}`;
   }
 
+  function renderHuaweiBadge(problem, compact = false) {
+    if (!problem.isHuawei) return "";
+    const compactClass = compact ? " compact" : "";
+    return `
+      <span class="huawei-badge tier-${escapeHtml(problem.huaweiTier.toLowerCase())}${compactClass}" title="华为笔试题：${escapeHtml(problem.huaweiTierLabel)}，频率 ${problem.huaweiFrequency}/8">
+        <span>华为</span><strong>${escapeHtml(problem.huaweiTier)}级</strong>${compact ? "" : `<small>${problem.huaweiFrequency}/8</small>`}
+      </span>`;
+  }
+
   function renderProblemRow(problem) {
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
@@ -370,22 +461,23 @@
         : completed > CORE_ROUNDS
           ? "选择掌握程度后生成"
           : "";
-    const displayOrder = problem.isCustom ? `补${problem.customOrder}` : problem.order;
+    const displayOrder = problem.isSupplement ? `补${problem.supplementOrder}` : problem.order;
     const englishTitle = problem.en ? `<div class="problem-en">${escapeHtml(problem.en)}</div>` : "";
     const customBadge = problem.isCustom ? `<span class="custom-badge">补充</span>` : "";
+    const huaweiBadge = renderHuaweiBadge(problem);
     const customActions = problem.isCustom ? `
       <div class="custom-manage">
         <label><span class="sr-only">调整 ${escapeHtml(problem.id)} 的专题</span><select data-action="custom-category" aria-label="调整 ${escapeHtml(problem.id)} 的专题">${baseCategories.map((category) => `<option value="${escapeHtml(category)}"${category === problem.category ? " selected" : ""}>${escapeHtml(category)}</option>`).join("")}</select></label>
         <button class="delete-problem-button" type="button" data-action="delete-custom" aria-label="删除 ${escapeHtml(problem.id)}">删除</button>
       </div>` : "";
     return `
-      <tr data-problem-id="${escapeHtml(problem.id)}" class="problem-row ${visualClass}" tabindex="-1">
+      <tr data-problem-id="${escapeHtml(problem.id)}" data-huawei-tier="${problem.isHuawei ? escapeHtml(problem.huaweiTier) : ""}" class="problem-row ${visualClass}${problem.isHuawei ? " huawei-problem" : ""}${problem.isSupplement ? " supplement-problem" : ""}${problem.isCustom ? " custom-problem" : ""}" tabindex="-1">
         <td class="col-order">${displayOrder}</td>
         <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener"><span>${escapeHtml(problem.id)}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
         <td class="col-next"><div class="${nextClass}"><span>${escapeHtml(info.text)}</span>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
-        <td class="col-note"><input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意">${customActions}</td>
+        <td class="col-note"><div class="note-cell">${huaweiBadge}<input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意">${customActions}</div></td>
       </tr>`;
   }
 
@@ -397,16 +489,18 @@
       if (!filtered.length) return "";
       rendered += filtered.length;
       const started = categoryProblems.filter((problem) => completedRounds(getRecord(problem.id)) > 0).length;
-      const standardRows = filtered.filter((problem) => !problem.isCustom).map(renderProblemRow).join("");
+      const standardRows = filtered.filter((problem) => !problem.isSupplement).map(renderProblemRow).join("");
+      const huaweiRows = filtered.filter((problem) => problem.isSupplement && problem.isHuawei).map(renderProblemRow).join("");
       const customRows = filtered.filter((problem) => problem.isCustom).map(renderProblemRow).join("");
-      const customDivider = customRows ? `<tr class="custom-divider"><td colspan="6"><span>补充题目</span></td></tr>` : "";
+      const huaweiDivider = huaweiRows ? `<tr class="supplement-divider huawei-divider"><td colspan="6"><span>华为补充题目</span><small>${filtered.filter((problem) => problem.isSupplement && problem.isHuawei).length} 道</small></td></tr>` : "";
+      const customDivider = customRows ? `<tr class="supplement-divider custom-divider"><td colspan="6"><span>我的补充题目</span></td></tr>` : "";
       return `
         <section class="category-section">
           <div class="category-head"><h3>${escapeHtml(category)}</h3><span>${started}/${categoryProblems.length} 题已开始</span></div>
           <div class="table-wrap">
             <table class="problem-table">
               <thead><tr><th class="col-order">顺序</th><th class="col-problem">题目</th><th class="col-level">难度</th><th class="col-dates">完成日期与掌握程度</th><th class="col-next">建议复习</th><th class="col-note">备注</th></tr></thead>
-              <tbody>${standardRows}${customDivider}${customRows}</tbody>
+              <tbody>${standardRows}${huaweiDivider}${huaweiRows}${customDivider}${customRows}</tbody>
             </table>
           </div>
         </section>`;
@@ -476,7 +570,7 @@
         ? normalizeCustomProblems(payload.customProblems)
         : null;
       const importIds = importedCustomProblems
-        ? new Set([...baseIds, ...importedCustomProblems.map((problem) => problem.id)])
+        ? new Set([...builtInIds, ...importedCustomProblems.map((problem) => problem.id)])
         : validIds;
       const imported = normalizeProgress(payload.progress || payload, importIds);
       if (!Object.keys(imported).length && !importedCustomProblems?.length) {
@@ -542,6 +636,7 @@
   function locateLibraryProblem(problem) {
     els.searchInput.value = "";
     els.categoryFilter.value = "all";
+    els.sourceFilter.value = "all";
     els.statusFilter.value = "all";
     renderGroups();
     requestAnimationFrame(() => {
@@ -575,7 +670,7 @@
     }
     pendingMissingMatches = matches;
     els.missingProblemMessage.textContent = matches.length === 1
-      ? `${matches[0].id}. ${matches[0].title}`
+      ? `${matches[0].id}. ${catalogDisplayTitle(matches[0])}`
       : `“${query}”对应 ${matches.length} 道力扣系列题，录入时可以选择正确题目。`;
     els.missingProblemDialog.showModal();
   }
@@ -585,7 +680,7 @@
     if (!candidate || hasProblemId(candidate.id)) return;
     pendingProblem = {
       id: candidate.id,
-      title: candidate.title,
+      title: catalogDisplayTitle(candidate),
       slug: candidate.slug,
       difficulty: difficultyFromLevel(candidate.level),
       category: candidate.category
@@ -598,6 +693,7 @@
     els.lookupProblemTitle.textContent = pendingProblem.title;
     els.lookupProblemDifficulty.textContent = difficultyText(pendingProblem.difficulty);
     els.newProblemCategory.value = pendingProblem.category;
+    els.newProblemChineseTitle.value = containsChinese(candidate.title) ? candidate.title : "";
     els.categoryRecommendation.textContent = `已根据力扣算法标签推荐“${pendingProblem.category}”，加入后仍可调整。`;
     els.lookupResult.classList.remove("hidden");
     els.confirmAddProblemButton.disabled = false;
@@ -610,7 +706,7 @@
     els.lookupCandidates.innerHTML = matches.map((item, index) => {
       const exists = hasProblemId(item.id);
       return `<button class="candidate-button${exists ? " exists" : ""}" type="button" data-candidate-index="${index}" ${exists ? "disabled" : ""} aria-pressed="false">
-        <span>${escapeHtml(item.id)}</span><strong>${escapeHtml(item.title)}</strong><small>${difficultyText(difficultyFromLevel(item.level))} · 推荐 ${escapeHtml(item.category)}${exists ? " · 已在题库" : ""}</small>
+        <span>${escapeHtml(item.id)}</span><strong>${escapeHtml(catalogDisplayTitle(item))}</strong><small>${difficultyText(difficultyFromLevel(item.level))} · 推荐 ${escapeHtml(item.category)}${exists ? " · 已在题库" : ""}</small>
       </button>`;
     }).join("");
   }
@@ -642,10 +738,15 @@
   function addPendingProblem() {
     if (!pendingProblem) return;
     const chineseTitle = els.newProblemChineseTitle.value.trim();
+    if (!containsChinese(chineseTitle)) {
+      showToast("请填写中文题名后再加入题库");
+      els.newProblemChineseTitle.focus();
+      return;
+    }
     customProblems.push({
       id: pendingProblem.id,
-      cn: chineseTitle || pendingProblem.title,
-      en: chineseTitle ? pendingProblem.title : "",
+      cn: chineseTitle,
+      en: "",
       slug: pendingProblem.slug,
       difficulty: pendingProblem.difficulty,
       category: els.newProblemCategory.value,
@@ -657,7 +758,7 @@
     render();
     els.addProblemDialog.close();
     els.newProblemIdInput.value = "";
-    showToast(`已加入 ${pendingProblem.id}. ${chineseTitle || pendingProblem.title}`);
+    showToast(`已加入 ${pendingProblem.id}. ${chineseTitle}`);
     pendingProblem = null;
     pendingMatches = [];
   }
@@ -795,7 +896,7 @@
     saveState();
   });
 
-  [els.searchInput, els.categoryFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
+  [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
   els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });

@@ -108,11 +108,14 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .due-card a { color: var(--ink); font-weight: 900; text-decoration: none; }
 .due-card a:hover { color: var(--teal); }
 .due-card p { color: var(--muted); font-size: 13px; }
+.due-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
 .due-date { color: var(--red); font-size: 13px; font-weight: 900; white-space: nowrap; }
 .due-empty { grid-column: 1 / -1; padding: 22px; border: 1px dashed #bad0d5; border-radius: 7px; color: var(--muted); text-align: center; }
 
 .workspace { width: 100%; max-width: 100%; overflow: hidden; }
 .workspace-head { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.huawei-legend { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.huawei-legend strong { color: #8d2f36; }
 .filters { display: flex; gap: 8px; }
 .filters input, .filters select { height: 40px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); padding: 0 12px; font-size: 14px; }
 .filters input { width: 230px; }
@@ -163,8 +166,11 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .problem-link:hover { color: var(--teal); }
 .problem-en { margin-top: 2px; color: var(--muted); font-size: 12px; }
 .custom-badge { display: inline-flex; margin-left: 5px; padding: 2px 5px; border: 1px solid #9bc6d3; border-radius: 4px; background: #edf7fa; color: #276f82; font-size: 10px; vertical-align: 1px; }
-.custom-divider td { height: 28px; padding: 0 14px; border-top: 4px solid #4c92aa; background: #f4f9fb; }
-.custom-divider span { display: inline-block; transform: translateY(-1px); padding-right: 8px; background: #f4f9fb; color: #39798e; font-size: 11px; font-weight: 900; }
+.supplement-divider td { height: 31px; padding: 0 14px; border-top: 4px solid #4c92aa; background: #f4f9fb; }
+.supplement-divider span { display: inline-block; transform: translateY(-1px); padding-right: 8px; color: #39798e; font-size: 11px; font-weight: 900; }
+.supplement-divider small { color: var(--muted); font-size: 11px; font-weight: 800; }
+.huawei-divider td { border-top-color: #a63e44; background: #fff7f6; }
+.huawei-divider span { color: #923239; }
 .difficulty { display: inline-flex; padding: 4px 8px; border-radius: 99px; font-size: 12px; font-weight: 900; }
 .difficulty.easy { background: var(--green-soft); color: var(--green); }
 .difficulty.medium { background: #fff1d6; color: #a56400; }
@@ -181,6 +187,18 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .next-review { display: grid; gap: 3px; font-size: 13px; font-weight: 900; }
 .next-review small { color: var(--muted); font-size: 12px; font-weight: 600; }
 .next-review.pending { color: #a45a1d; }
+.note-cell { display: grid; gap: 6px; }
+.huawei-badge { justify-self: end; display: inline-grid; grid-template-columns: auto auto auto; align-items: center; overflow: hidden; border: 1px solid transparent; border-radius: 5px; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; box-shadow: 0 2px 7px rgba(19, 43, 51, .14); }
+.huawei-badge span, .huawei-badge strong, .huawei-badge small { padding: 6px 7px; color: inherit; font-size: inherit; }
+.huawei-badge span { background: rgba(0, 0, 0, .16); font-weight: 900; }
+.huawei-badge strong { border-left: 1px solid rgba(255, 255, 255, .24); border-right: 1px solid rgba(255, 255, 255, .24); }
+.huawei-badge small { opacity: .92; }
+.huawei-badge.tier-s { background: #9f2431; border-color: #861b26; }
+.huawei-badge.tier-a { background: #c45f20; border-color: #a74b14; }
+.huawei-badge.tier-b { background: #2d708e; border-color: #235c76; }
+.huawei-badge.tier-c { background: #4d7075; border-color: #3c5b60; }
+.huawei-badge.compact { justify-self: auto; grid-template-columns: auto auto; box-shadow: none; font-size: 10px; }
+.huawei-badge.compact span, .huawei-badge.compact strong { padding: 4px 5px; }
 .note-input { width: 100%; min-height: 38px; padding: 8px; border: 1px solid transparent; border-bottom-color: var(--line); background: transparent; color: var(--ink); font-size: 13px; }
 .note-input:focus { border-color: var(--teal); border-radius: 6px; background: #fff; }
 .custom-manage { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
@@ -235,10 +253,9 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 }
 
 @media (max-width: 700px) {
-  .app-header { position: static; align-items: flex-start; padding: 14px 16px; }
+  .app-header { position: static; display: grid; grid-template-columns: minmax(0, 1fr); align-items: flex-start; gap: 14px; padding: 14px 16px; }
   .brand-mark { width: 45px; height: 45px; font-size: 15px; }
-  .app-header { gap: 12px; }
-  .header-actions { align-items: stretch; flex-wrap: wrap; justify-content: flex-end; }
+  .header-actions { width: 100%; align-items: stretch; flex-wrap: wrap; justify-content: flex-start; }
   .quick-add { width: 100%; padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--line); }
   .quick-add input { flex: 1; min-width: 0; }
   .candidate-button { grid-template-columns: 72px minmax(0, 1fr); }
