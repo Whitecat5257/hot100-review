@@ -94,6 +94,8 @@
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     sourceFilter: document.querySelector("#sourceFilter"),
+    huaweiTierFilter: document.querySelector("#huaweiTierFilter"),
+    huaweiTierInputs: Array.from(document.querySelectorAll("#huaweiTierFilter input[type='checkbox']")),
     statusFilter: document.querySelector("#statusFilter"),
     dataDialog: document.querySelector("#dataDialog"),
     clearDialog: document.querySelector("#clearDialog"),
@@ -397,6 +399,7 @@
     const query = els.searchInput.value.trim().toLowerCase();
     const category = els.categoryFilter.value;
     const source = els.sourceFilter.value;
+    const selectedHuaweiTiers = new Set(els.huaweiTierInputs.filter((input) => input.checked).map((input) => input.value));
     const status = els.statusFilter.value;
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
@@ -408,12 +411,17 @@
       || (source === "huawei" && problem.isHuawei)
       || (source === "hot100" && !problem.isSupplement)
       || (source === "custom" && problem.isCustom);
+    const huaweiTierMatch = source !== "huawei" || (problem.isHuawei && selectedHuaweiTiers.has(problem.huaweiTier));
     const statusMatch = status === "all"
       || (status === "not-started" && completed === 0)
       || (status === "started" && completed > 0)
       || (status === "due" && info.due)
       || (status === "core-done" && completed >= CORE_ROUNDS);
-    return queryMatch && categoryMatch && sourceMatch && statusMatch;
+    return queryMatch && categoryMatch && sourceMatch && huaweiTierMatch && statusMatch;
+  }
+
+  function syncHuaweiTierFilter() {
+    els.huaweiTierFilter.hidden = els.sourceFilter.value !== "huawei";
   }
 
   function rowVisualClass(record, info) {
@@ -482,6 +490,7 @@
   }
 
   function renderGroups() {
+    syncHuaweiTierFilter();
     let rendered = 0;
     els.problemGroups.innerHTML = groups.map(([category]) => {
       const categoryProblems = problems.filter((problem) => problem.category === category);
@@ -897,6 +906,7 @@
   });
 
   [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
+  els.huaweiTierInputs.forEach((input) => input.addEventListener("change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
   els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });
