@@ -102,6 +102,9 @@
     fileInput: document.querySelector("#fileInput"),
     dataMessage: document.querySelector("#dataMessage"),
     newProblemIdInput: document.querySelector("#newProblemIdInput"),
+    searchResultsDialog: document.querySelector("#searchResultsDialog"),
+    searchResultsSummary: document.querySelector("#searchResultsSummary"),
+    searchResultsList: document.querySelector("#searchResultsList"),
     addProblemDialog: document.querySelector("#addProblemDialog"),
     addProblemForm: document.querySelector("#addProblemForm"),
     newProblemCategory: document.querySelector("#newProblemCategory"),
@@ -126,6 +129,7 @@
   let pendingProblem = null;
   let pendingMatches = [];
   let pendingMissingMatches = [];
+  let pendingSearchResults = [];
   let pendingDeleteProblemId = "";
 
   function todayISO() {
@@ -642,6 +646,74 @@
     return problems.find((problem) => problemIdKey(problem.id) === key) || null;
   }
 
+  function normalizedSearchText(value) {
+    return String(value || "").trim().toLowerCase().replace(/[\s·:：()（）\-_/]+/g, "");
+  }
+
+  function titleMatchRank(queryKey, title) {
+    const titleKey = normalizedSearchText(title);
+    if (!titleKey) return 99;
+    if (titleKey === queryKey) return 0;
+    if (titleKey.startsWith(queryKey)) return 1;
+    return titleKey.includes(queryKey) ? 2 : 99;
+  }
+
+  function findTitleSearchResults(query) {
+    const queryKey = normalizedSearchText(query);
+    if (!queryKey) return [];
+    const results = [];
+    const libraryById = new Map(problems.map((problem) => [problemIdKey(problem.id), problem]));
+    const addedLibraryIds = new Set();
+
+    problems.forEach((problem) => {
+      const rank = Math.min(titleMatchRank(queryKey, problem.cn), titleMatchRank(queryKey, problem.en));
+      if (rank >= 99) return;
+      addedLibraryIds.add(problemIdKey(problem.id));
+      results.push({ kind: "library", rank, id: problem.id, title: problem.cn, difficulty: problem.difficulty, category: problem.category, problem });
+    });
+
+    leetcodeCatalog.forEach((item) => {
+      const itemId = problemIdKey(item.id);
+      if (addedLibraryIds.has(itemId)) return;
+      const rank = titleMatchRank(queryKey, item.title);
+      if (rank >= 99) return;
+      const existingProblem = libraryById.get(itemId);
+      if (existingProblem) {
+        addedLibraryIds.add(itemId);
+        results.push({ kind: "library", rank, id: existingProblem.id, title: existingProblem.cn, difficulty: existingProblem.difficulty, category: existingProblem.category, problem: existingProblem });
+        return;
+      }
+      results.push({ kind: "catalog", rank, id: item.id, title: catalogDisplayTitle(item), difficulty: difficultyFromLevel(item.level), category: item.category, item });
+    });
+
+    return results.sort((a, b) => a.rank - b.rank
+      || (a.kind === b.kind ? 0 : a.kind === "library" ? -1 : 1)
+      || a.id.localeCompare(b.id, "zh-CN", { numeric: true }));
+  }
+
+  function showMissingProblemMatches(matches, query) {
+    pendingMissingMatches = matches;
+    els.missingProblemMessage.textContent = matches.length === 1
+      ? `${matches[0].id}. ${catalogDisplayTitle(matches[0])}`
+      : `“${query}”对应 ${matches.length} 道力扣系列题，录入时可以选择正确题目。`;
+    els.missingProblemDialog.showModal();
+  }
+
+  function showTitleSearchResults(query, results) {
+    const maxResults = 60;
+    pendingSearchResults = results.slice(0, maxResults);
+    els.searchResultsSummary.textContent = results.length > maxResults
+      ? `“${query}”共找到 ${results.length} 道相关题目，当前显示最匹配的 ${maxResults} 道。`
+      : `“${query}”共找到 ${results.length} 道相关题目。`;
+    els.searchResultsList.innerHTML = pendingSearchResults.map((result, index) => `
+      <button class="search-result-button" type="button" data-search-result-index="${index}">
+        <span class="search-result-number">${escapeHtml(result.id)}</span>
+        <span class="search-result-name"><strong>${escapeHtml(result.title)}</strong><small>${difficultyText(result.difficulty)} · ${escapeHtml(result.category)}</small></span>
+        <span class="search-result-status ${result.kind === "library" ? "existing" : "available"}">${result.kind === "library" ? "已在题库" : "可录入"}</span>
+      </button>`).join("");
+    els.searchResultsDialog.showModal();
+  }
+
   function locateLibraryProblem(problem) {
     els.searchInput.value = "";
     els.categoryFilter.value = "all";
@@ -663,7 +735,7 @@
   function searchProblemLibrary() {
     const query = els.newProblemIdInput.value.trim();
     if (!query) {
-      showToast("请输入力扣题号");
+      showToast("请输入力扣题号或题名");
       els.newProblemIdInput.focus();
       return;
     }
@@ -673,15 +745,24 @@
       return;
     }
     const matches = findCatalogMatches(query);
-    if (!matches.length) {
-      showToast("题库和力扣公开题目索引中都没有找到该题号");
+    if (matches.length) {
+      showMissingProblemMatches(matches, query);
       return;
     }
-    pendingMissingMatches = matches;
-    els.missingProblemMessage.textContent = matches.length === 1
-      ? `${matches[0].id}. ${catalogDisplayTitle(matches[0])}`
-      : `“${query}”对应 ${matches.length} 道力扣系列题，录入时可以选择正确题目。`;
-    els.missingProblemDialog.showModal();
+
+    const titleResults = findTitleSearchResults(query);
+    if (!titleResults.length) {
+      showToast("题库和力扣公开题目索引中都没有找到相关题目");
+      return;
+    }
+    const exactResults = titleResults.filter((result) => result.rank === 0);
+    if (exactResults.length === 1) {
+      const [result] = exactResults;
+      if (result.kind === "library") locateLibraryProblem(result.problem);
+      else showMissingProblemMatches([result.item], query);
+      return;
+    }
+    showTitleSearchResults(query, titleResults);
   }
 
   function selectLookupCandidate(index) {
@@ -723,7 +804,7 @@
   function lookupNewProblem(matchesOverride = null) {
     const query = els.newProblemIdInput.value.trim();
     if (!query) {
-      showToast("请输入力扣题号");
+      showToast("请输入力扣题号或题名");
       els.newProblemIdInput.focus();
       return;
     }
@@ -910,6 +991,18 @@
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
   els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });
+  els.searchResultsList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-search-result-index]");
+    if (!button) return;
+    const result = pendingSearchResults[Number(button.dataset.searchResultIndex)];
+    if (!result) return;
+    pendingSearchResults = [];
+    els.searchResultsDialog.close();
+    if (result.kind === "library") locateLibraryProblem(result.problem);
+    else showMissingProblemMatches([result.item], result.title);
+  });
+  document.querySelector("#closeSearchResultsButton").addEventListener("click", () => { pendingSearchResults = []; els.searchResultsDialog.close(); });
+  document.querySelector("#cancelSearchResultsButton").addEventListener("click", () => { pendingSearchResults = []; els.searchResultsDialog.close(); });
   els.lookupCandidates.addEventListener("click", (event) => {
     const button = event.target.closest("[data-candidate-index]");
     if (button) selectLookupCandidate(Number(button.dataset.candidateIndex));
