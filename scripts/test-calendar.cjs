@@ -11,10 +11,12 @@ const problems = [
 const records = {
   "1": { rounds: [true, true, false, true, true], dates: ["2026-10-02", "2026-10-02", "2026-10-02", "2026-02-30", ""], ratings: [] },
   "49": { rounds: [true, true, true, true, true, true], dates: ["2026-06-01", "2026-07-01", "2026-08-01", "2026-09-01", "2026-09-27", "2026-10-02"], ratings: ["", "", "", "", "", "partial"] },
-  "LCP 30": { rounds: [true], dates: ["2026-09-30"], ratings: [] }
+  "LCP 30": { rounds: [true, true], dates: ["2026-09-30", "2026-10-02"], ratings: [] }
 };
 const before = JSON.stringify(records);
 const els = Object.fromEntries(["calendarMonth", "calendarMonthSummary", "calendarGrid", "calendarDayTitle", "calendarDaySummary", "calendarDayProblems"].map((name) => [name, {}]));
+els.calendarDayProblems.dataset = {};
+els.calendarDayProblems.querySelectorAll = () => [];
 const context = vm.createContext({ problems, els, CORE_ROUNDS: 5, calendarSelectedDate: "", RATINGS: { partial: { label: "思路了解但写不出来" } }, getRecord: (id) => records[id] });
 function load(from, to) {
   const start = source.indexOf(from);
@@ -26,20 +28,28 @@ load("  function todayISO", "  function problemIdKey");
 load("  function calendarHistory", "  function render() {");
 context.todayISO = () => "2026-10-02";
 const history = context.calendarHistory();
-assert.equal(history.get("2026-10-02").size, 2);
+assert.equal(history.get("2026-10-02").size, 3);
 assert.equal(history.get("2026-10-02").get("1").attempts.length, 2);
 assert.equal(history.get("2026-10-02").get("49").attempts[0].rating, "partial");
 assert.equal(history.has("2026-02-30"), false);
 assert.equal(history.has(""), false);
 context.selectCalendarDate("2026-10-02");
 assert.equal(els.calendarMonth.value, "2026-10");
-assert.equal(els.calendarMonthSummary.textContent, "本月 1 天有记录 · 2 道题 · 3 次完成");
-assert.equal(els.calendarDaySummary.textContent, "2 道题 · 3 次完成");
+assert.equal(els.calendarMonthSummary.textContent, "本月 1 天有记录 · 3 道题 · 4 次完成");
+assert.equal(els.calendarDaySummary.textContent, "2 个专题 · 3 道题 · 4 次完成");
+assert.equal((els.calendarDayProblems.innerHTML.match(/<details /g) || []).length, 2);
+assert.ok(els.calendarDayProblems.innerHTML.includes("2 道题 · 3 次完成"));
+assert.ok(els.calendarDayProblems.innerHTML.includes("1 道题 · 1 次完成"));
+assert.ok(els.calendarDayProblems.innerHTML.indexOf('data-category="数组与哈希"') < els.calendarDayProblems.innerHTML.indexOf('data-category="动态规划与贪心"'));
+assert.ok(!els.calendarDayProblems.innerHTML.includes(' open>'));
+els.calendarDayProblems.querySelectorAll = () => [{ dataset: { category: "数组与哈希" } }];
+context.renderCalendar();
+assert.ok(els.calendarDayProblems.innerHTML.includes('data-category="数组与哈希" open>'));
 assert.ok(els.calendarDayProblems.innerHTML.includes("思路了解但写不出来"));
 assert.ok(els.calendarDayProblems.innerHTML.includes('data-problem-id="49"'));
 assert.ok(!els.calendarDayProblems.innerHTML.includes("leetcode.cn"));
 assert.equal((els.calendarGrid.innerHTML.match(/data-date=/g) || []).length, 42);
-assert.ok(els.calendarGrid.innerHTML.includes('aria-label="2026-10-02，2 道题，今天" aria-pressed="true"'));
+assert.ok(els.calendarGrid.innerHTML.includes('aria-label="2026-10-02，3 道题，今天" aria-pressed="true"'));
 const days = context.calendarMonthDays("2024-02");
 assert.equal(days[0], "2024-01-29");
 assert.ok(days.includes("2024-02-29"));
@@ -57,7 +67,8 @@ context.changeCalendarMonth("");
 assert.equal(els.calendarMonth.value, "2026-12");
 context.selectCalendarDate("2026-09-30");
 assert.ok(els.calendarDayProblems.innerHTML.includes("魔塔游戏"));
+assert.ok(!els.calendarDayProblems.innerHTML.includes(' open>'));
 context.selectCalendarDate("invalid");
 assert.equal(context.calendarSelectedDate, "2026-09-30");
 assert.equal(JSON.stringify(records), before);
-console.log("PASS: daily deduplication, attempt details, invalid dates, leap month, year navigation, empty days, and read-only history");
+console.log("PASS: grouped daily counts, collapsed categories, ordering, expansion refresh, date switching, deduplication, leap month, and read-only history");
