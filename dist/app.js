@@ -94,6 +94,10 @@
     dueList: document.querySelector("#dueList"),
     problemGroups: document.querySelector("#problemGroups"),
     emptyState: document.querySelector("#emptyState"),
+    filteredTotal: document.querySelector("#filteredTotal"),
+    filteredStarted: document.querySelector("#filteredStarted"),
+    filteredUnstarted: document.querySelector("#filteredUnstarted"),
+    filterCategorySummary: document.querySelector("#filterCategorySummary"),
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     sourceFilter: document.querySelector("#sourceFilter"),
@@ -551,15 +555,35 @@
       </tr>`;
   }
 
+  function filteredGroupStats() {
+    const matching = problems.filter(matchesFilters);
+    return groups.map(([category]) => {
+      const filtered = matching.filter((problem) => problem.category === category);
+      const started = filtered.filter((problem) => completedRounds(getRecord(problem.id)) > 0).length;
+      return { category, filtered, started };
+    });
+  }
+
+  function renderFilterSummary(filteredGroups) {
+    const total = filteredGroups.reduce((sum, group) => sum + group.filtered.length, 0);
+    const started = filteredGroups.reduce((sum, group) => sum + group.started, 0);
+    els.filteredTotal.textContent = total;
+    els.filteredStarted.textContent = started;
+    els.filteredUnstarted.textContent = total - started;
+    els.filterCategorySummary.innerHTML = filteredGroups.map(({ category, filtered, started }) => `
+      <li class="filter-category-stat${filtered.length ? "" : " is-empty"}">
+        <span class="filter-category-name">${escapeHtml(category)}</span>
+        <span class="filter-category-count">已开始 <strong>${started}</strong><span class="stat-divider">/</span>共 <strong>${filtered.length}</strong> 题</span>
+      </li>`).join("");
+    return total;
+  }
+
   function renderGroups() {
     syncHuaweiTierFilter();
-    let rendered = 0;
-    els.problemGroups.innerHTML = groups.map(([category]) => {
-      const categoryProblems = problems.filter((problem) => problem.category === category);
-      const filtered = categoryProblems.filter(matchesFilters);
+    const filteredGroups = filteredGroupStats();
+    const rendered = renderFilterSummary(filteredGroups);
+    els.problemGroups.innerHTML = filteredGroups.map(({ category, filtered, started }) => {
       if (!filtered.length) return "";
-      rendered += filtered.length;
-      const started = categoryProblems.filter((problem) => completedRounds(getRecord(problem.id)) > 0).length;
       const standardRows = filtered.filter((problem) => !problem.isSupplement).map(renderProblemRow).join("");
       const huaweiRows = filtered.filter((problem) => problem.isSupplement && problem.isHuawei).map(renderProblemRow).join("");
       const customRows = filtered.filter((problem) => problem.isCustom).map(renderProblemRow).join("");
@@ -567,7 +591,7 @@
       const customDivider = customRows ? `<tr class="supplement-divider custom-divider"><td colspan="6"><span>我的补充题目</span></td></tr>` : "";
       return `
         <section class="category-section">
-          <div class="category-head"><h3>${escapeHtml(category)}</h3><span>${started}/${categoryProblems.length} 题已开始</span></div>
+          <div class="category-head"><h3>${escapeHtml(category)}</h3><span>${started}/${filtered.length} 题已开始</span></div>
           <div class="table-wrap">
             <table class="problem-table">
               <thead><tr><th class="col-order">顺序</th><th class="col-problem">题目</th><th class="col-level">难度</th><th class="col-dates">完成日期与掌握程度</th><th class="col-next">建议复习</th><th class="col-note">备注</th></tr></thead>

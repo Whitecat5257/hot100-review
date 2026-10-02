@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#087f8c">
   <title>Hot 100 复习台</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261002-difficulty-filter">
+  <link rel="stylesheet" href="styles.css?v=20261002-filter-summary">
 </head>
 <body>
   <header class="app-header">
@@ -84,6 +84,15 @@
           </fieldset>
         </div>
       </div>
+      <section class="filter-summary" aria-labelledby="filterSummaryTitle">
+        <div class="filter-summary-total" aria-live="polite" aria-atomic="true">
+          <h3 id="filterSummaryTitle">当前筛选</h3>
+          <span>共 <strong id="filteredTotal">0</strong> 题</span>
+          <span>已开始 <strong id="filteredStarted">0</strong> 题</span>
+          <span>未开始 <strong id="filteredUnstarted">0</strong> 题</span>
+        </div>
+        <ul id="filterCategorySummary" class="filter-category-summary" aria-label="各专题筛选统计"></ul>
+      </section>
       <div id="problemGroups"></div>
       <div id="emptyState" class="empty-state hidden">没有符合当前筛选条件的题目。</div>
     </section>
@@ -189,6 +198,6 @@
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=20261002"></script>
-  <script src="app.js?v=20261002-difficulty-filter"></script>
+  <script src="app.js?v=20261002-filter-summary"></script>
 </body>
 </html>
