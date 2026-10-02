@@ -80,6 +80,9 @@
 
   const els = {
     todayLabel: document.querySelector("#todayLabel"),
+    quoteText: document.querySelector("#quoteText"),
+    quoteSource: document.querySelector("#quoteSource"),
+    backToTopButton: document.querySelector("#backToTopButton"),
     startedMetric: document.querySelector("#startedMetric"),
     startedTotal: document.querySelector("#startedTotal"),
     coreMetric: document.querySelector("#coreMetric"),
@@ -131,6 +134,10 @@
   let pendingMissingMatches = [];
   let pendingSearchResults = [];
   let pendingDeleteProblemId = "";
+  const openDueCategories = new Set();
+  let quoteTimer = 0;
+  let displayedQuoteHour = null;
+  let displayedDay = "";
 
   function todayISO() {
     const date = new Date();
@@ -381,22 +388,70 @@
   }
 
   function renderDueList() {
+    els.dueList.querySelectorAll("details[data-due-category]").forEach((section) => {
+      if (section.open) openDueCategories.add(section.dataset.dueCategory);
+      else openDueCategories.delete(section.dataset.dueCategory);
+    });
     const dueItems = problems
       .map((problem) => ({ problem, info: reviewInfo(problem) }))
       .filter((item) => item.info.due)
       .sort((a, b) => a.info.dueDate.localeCompare(b.info.dueDate) || a.problem.order - b.problem.order);
 
-    els.dueList.innerHTML = dueItems.length ? dueItems.slice(0, 6).map(({ problem, info }) => `
-      <article class="due-card">
-        <div>
-          <div class="due-title-row">
-            <a href="https://leetcode.cn/problems/${problem.slug}/" target="_blank" rel="noopener">${problem.id}. ${escapeHtml(problem.cn)}</a>
-            ${renderHuaweiBadge(problem, true)}
-          </div>
-          <p>下一次：第 ${info.nextRound + 1} 次 · ${escapeHtml(problem.category)}</p>
-        </div>
-        <span class="due-date">${escapeHtml(info.text)}</span>
-      </article>`).join("") : `<div class="due-empty">今天没有到期题目。保持节奏就好。</div>`;
+    els.dueList.innerHTML = dueItems.length ? groups.map(([category]) => {
+      const items = dueItems.filter(({ problem }) => problem.category === category);
+      if (!items.length) return "";
+      const overdue = items.filter(({ info }) => info.dueDate < todayISO()).length;
+      const dueToday = items.length - overdue;
+      const counts = [overdue ? `逾期 ${overdue} 题` : "", dueToday ? `今日 ${dueToday} 题` : ""].filter(Boolean).join(" · ");
+      return `
+        <details class="due-category" data-due-category="${escapeHtml(category)}"${openDueCategories.has(category) ? " open" : ""}>
+          <summary class="due-category-summary">
+            <span class="due-category-name">${escapeHtml(category)}<span class="due-count">${items.length}</span></span>
+            <span class="due-category-counts">${counts}</span>
+            <img class="due-chevron" src="icons/chevron-down.svg" width="18" height="18" alt="" aria-hidden="true">
+          </summary>
+          <div class="due-category-items">${items.map(({ problem, info }) => `
+            <article class="due-card">
+              <div>
+                <div class="due-title-row">
+                  <a class="due-problem-link" data-due-problem-id="${escapeHtml(problem.id)}" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener">${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</a>
+                  ${renderHuaweiBadge(problem, true)}
+                </div>
+                <p>下一次：第 ${info.nextRound + 1} 次 · 计划日期 ${info.dueDate}</p>
+              </div>
+              <span class="due-date${info.dueDate === todayISO() ? " due-today" : ""}">${escapeHtml(info.text)}</span>
+            </article>`).join("")}</div>
+        </details>`;
+    }).join("") : `<div class="due-empty">今天没有到期题目。保持节奏就好。</div>`;
+  }
+
+  function refreshHeaderClock() {
+    const now = new Date();
+    const day = todayISO();
+    if (day !== displayedDay) {
+      const changedDay = Boolean(displayedDay);
+      displayedDay = day;
+      els.todayLabel.textContent = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" }).format(now);
+      if (changedDay) render();
+    }
+    const hour = Math.floor(now.getTime() / 3600000);
+    if (hour === displayedQuoteHour) return;
+    const quote = window.REVIEW_INSPIRATION?.forHour(hour);
+    if (!quote) return;
+    displayedQuoteHour = hour;
+    els.quoteText.textContent = quote.text;
+    els.quoteSource.textContent = `${quote.author ? `${quote.author} · ` : ""}《${quote.source}》`;
+    els.quoteSource.href = quote.url;
+  }
+
+  function scheduleQuoteRefresh() {
+    clearTimeout(quoteTimer);
+    refreshHeaderClock();
+    quoteTimer = setTimeout(scheduleQuoteRefresh, 3600000 - Date.now() % 3600000 + 50);
+  }
+
+  function updateBackToTop() {
+    els.backToTopButton.hidden = window.scrollY <= 24;
   }
 
   function matchesFilters(problem) {
@@ -987,6 +1042,13 @@
   });
 
   [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
+  window.addEventListener("scroll", updateBackToTop, { passive: true });
+  els.backToTopButton.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    els.newProblemIdInput.focus({ preventScroll: true });
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) scheduleQuoteRefresh(); });
+  window.addEventListener("pageshow", () => { scheduleQuoteRefresh(); updateBackToTop(); });
   els.huaweiTierInputs.forEach((input) => input.addEventListener("change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
@@ -1027,8 +1089,8 @@
   document.querySelector("#clearButton").addEventListener("click", () => els.clearDialog.showModal());
   document.querySelector("#confirmClearButton").addEventListener("click", () => { state = {}; saveState(); render(); els.clearDialog.close(); els.dataDialog.close(); showToast("当前浏览器记录已清空"); });
 
-  const now = new Date();
-  els.todayLabel.textContent = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" }).format(now);
+  scheduleQuoteRefresh();
+  updateBackToTop();
   initFilters();
   render();
   registerWebMcpTools();

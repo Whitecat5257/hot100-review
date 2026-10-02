@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#087f8c">
   <title>Hot 100 复习台</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261001-title-search">
+  <link rel="stylesheet" href="styles.css?v=20261002-review-navigation">
 </head>
 <body>
   <header class="app-header">
@@ -19,6 +19,10 @@
         <p id="todayLabel" class="today-label"></p>
       </div>
     </div>
+    <figure id="headerQuote" class="header-quote" aria-label="励志名句">
+      <blockquote id="quoteText">天行健，君子以自强不息。</blockquote>
+      <figcaption><a id="quoteSource" href="https://zh.wikisource.org/zh-hans/周易/乾" target="_blank" rel="noopener">《周易·乾》</a></figcaption>
+    </figure>
     <div class="header-actions">
       <div class="quick-add">
         <label for="newProblemIdInput" class="sr-only">搜索力扣题号或题名</label>
@@ -78,6 +82,11 @@
       <div id="emptyState" class="empty-state hidden">没有符合当前筛选条件的题目。</div>
     </section>
   </main>
+
+  <button id="backToTopButton" class="back-to-top" type="button" aria-label="回到顶部" title="回到顶部" hidden>
+    <img src="icons/arrow-up.svg" width="22" height="22" alt="" aria-hidden="true">
+    <span class="back-to-top-tooltip" aria-hidden="true">回到顶部</span>
+  </button>
 
   <dialog id="dataDialog" class="data-dialog">
     <form method="dialog" class="dialog-shell">
@@ -173,6 +182,7 @@
   <script src="leetcode-catalog.js?v=20260929-cn"></script>
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
-  <script src="app.js?v=20261001-title-search"></script>
+  <script src="quotes.js?v=20261002"></script>
+  <script src="app.js?v=20261002-review-navigation"></script>
 </body>
 </html>
