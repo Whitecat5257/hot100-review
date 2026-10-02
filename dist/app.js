@@ -91,6 +91,13 @@
     dueMetric: document.querySelector("#dueMetric"),
     progressText: document.querySelector("#progressText"),
     progressBar: document.querySelector("#progressBar"),
+    calendarDialog: document.querySelector("#calendarDialog"),
+    calendarMonth: document.querySelector("#calendarMonth"),
+    calendarMonthSummary: document.querySelector("#calendarMonthSummary"),
+    calendarGrid: document.querySelector("#calendarGrid"),
+    calendarDayTitle: document.querySelector("#calendarDayTitle"),
+    calendarDaySummary: document.querySelector("#calendarDaySummary"),
+    calendarDayProblems: document.querySelector("#calendarDayProblems"),
     dueList: document.querySelector("#dueList"),
     problemGroups: document.querySelector("#problemGroups"),
     emptyState: document.querySelector("#emptyState"),
@@ -143,6 +150,7 @@
   let quoteTimer = 0;
   let displayedQuoteHour = null;
   let displayedDay = "";
+  let calendarSelectedDate = "";
 
   function todayISO() {
     const date = new Date();
@@ -603,10 +611,79 @@
     els.emptyState.classList.toggle("hidden", rendered > 0);
   }
 
+  function calendarHistory() {
+    const history = new Map();
+    problems.forEach((problem) => {
+      const record = getRecord(problem.id);
+      record.dates.forEach((value, round) => {
+        const date = normalizeDate(value);
+        if (!record.rounds[round] || !date) return;
+        if (!history.has(date)) history.set(date, new Map());
+        const day = history.get(date);
+        if (!day.has(problem.id)) day.set(problem.id, { problem, attempts: [] });
+        day.get(problem.id).attempts.push({ round: round + 1, rating: round >= CORE_ROUNDS ? record.ratings[round] : "" });
+      });
+    });
+    return history;
+  }
+
+  function calendarMonthDays(month) {
+    const first = parseISO(`${month}-01`);
+    const offset = (first.getDay() + 6) % 7;
+    return Array.from({ length: 42 }, (_, index) => addDays(`${month}-01`, index - offset));
+  }
+
+  function renderCalendar() {
+    const history = calendarHistory();
+    const month = els.calendarMonth.value;
+    const monthEntries = [...history].filter(([date]) => date.startsWith(`${month}-`));
+    const monthProblems = new Set(monthEntries.flatMap(([, day]) => [...day.keys()]));
+    const monthAttempts = monthEntries.reduce((sum, [, day]) => sum + [...day.values()].reduce((count, item) => count + item.attempts.length, 0), 0);
+    els.calendarMonthSummary.textContent = `本月 ${monthEntries.length} 天有记录 · ${monthProblems.size} 道题 · ${monthAttempts} 次完成`;
+    els.calendarGrid.innerHTML = calendarMonthDays(month).map((date) => {
+      const count = history.get(date)?.size || 0;
+      const outside = !date.startsWith(`${month}-`);
+      const level = count === 0 ? 0 : count <= 3 ? 1 : count <= 7 ? 2 : count <= 14 ? 3 : 4;
+      return `<button class="calendar-day activity-${level}${outside ? " outside-month" : ""}${date === todayISO() ? " is-today" : ""}" type="button" data-date="${date}" aria-label="${date}，${count} 道题${date === todayISO() ? "，今天" : ""}" aria-pressed="${date === calendarSelectedDate}"><span>${Number(date.slice(-2))}</span><small>${count ? `${count}题` : "—"}</small></button>`;
+    }).join("");
+    const dayEntries = [...(history.get(calendarSelectedDate)?.values() || [])];
+    const attempts = dayEntries.reduce((sum, item) => sum + item.attempts.length, 0);
+    els.calendarDayTitle.textContent = `${calendarSelectedDate.replace(/-/g, "/")} 做题记录`;
+    els.calendarDaySummary.textContent = dayEntries.length ? `${dayEntries.length} 道题 · ${attempts} 次完成` : "这一天还没有做题记录。";
+    els.calendarDayProblems.innerHTML = dayEntries.map(({ problem, attempts: entries }) => {
+      const detail = entries.map(({ round, rating }) => `第 ${round} 次${RATINGS[rating] ? ` · ${RATINGS[rating].label}` : ""}`).join("；");
+      return `<li><button type="button" class="calendar-problem" data-problem-id="${escapeHtml(problem.id)}"><strong>${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</strong><span>${escapeHtml(problem.category)} · ${escapeHtml(detail)}</span></button></li>`;
+    }).join("");
+  }
+
+  function selectCalendarDate(date) {
+    if (!normalizeDate(date)) return;
+    calendarSelectedDate = date;
+    els.calendarMonth.value = date.slice(0, 7);
+    renderCalendar();
+  }
+
+  function changeCalendarMonth(month) {
+    if (!normalizeDate(`${month}-01`)) {
+      els.calendarMonth.value = calendarSelectedDate.slice(0, 7);
+      return;
+    }
+    const today = todayISO();
+    selectCalendarDate(today.startsWith(`${month}-`) ? today : `${month}-01`);
+  }
+
+  function moveCalendarMonth(offset) {
+    const date = parseISO(`${els.calendarMonth.value}-01`);
+    date.setMonth(date.getMonth() + offset);
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    changeCalendarMonth(month);
+  }
+
   function render() {
     renderStats();
     renderDueList();
     renderGroups();
+    if (els.calendarDialog.open) renderCalendar();
   }
 
   function updateRoundDate(problemId, round, value) {
@@ -1078,6 +1155,21 @@
 
   [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   els.dueList.addEventListener("click", locateDueProblem);
+  document.querySelector("#calendarButton").addEventListener("click", () => { selectCalendarDate(todayISO()); els.calendarDialog.showModal(); });
+  document.querySelector("#closeCalendarButton").addEventListener("click", () => els.calendarDialog.close());
+  document.querySelector("#calendarTodayButton").addEventListener("click", () => selectCalendarDate(todayISO()));
+  document.querySelector("#previousMonthButton").addEventListener("click", () => moveCalendarMonth(-1));
+  document.querySelector("#nextMonthButton").addEventListener("click", () => moveCalendarMonth(1));
+  els.calendarMonth.addEventListener("change", () => changeCalendarMonth(els.calendarMonth.value));
+  els.calendarGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-date]");
+    if (button) { selectCalendarDate(button.dataset.date); els.calendarGrid.querySelector(`[data-date="${calendarSelectedDate}"]`)?.focus(); }
+  });
+  els.calendarDayProblems.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-problem-id]");
+    const problem = button && problems.find((item) => item.id === button.dataset.problemId);
+    if (problem) { els.calendarDialog.close(); locateLibraryProblem(problem); }
+  });
   window.addEventListener("scroll", updateBackToTop, { passive: true });
   els.backToTopButton.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
