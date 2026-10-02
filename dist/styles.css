@@ -305,6 +305,16 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 .calendar-details { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .calendar-details h3 { font-size: 15px; }
 .calendar-day-problems { margin: 0; padding: 0; list-style: none; }
+.calendar-category { border-bottom: 1px solid var(--line); }
+.calendar-category-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; min-height: 54px; padding: 12px 0; cursor: pointer; list-style: none; }
+.calendar-category-summary::-webkit-details-marker { display: none; }
+.calendar-category-summary strong { font-size: 14px; overflow-wrap: anywhere; }
+.calendar-category-summary > span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.calendar-category-summary:hover { background: var(--surface-soft); }
+.calendar-category-summary:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.calendar-category-chevron { transform: rotate(180deg); transition: transform .18s ease; }
+.calendar-category[open] .calendar-category-chevron { transform: rotate(0); }
+.calendar-category-problems { margin: 0; padding: 0 8px 8px; list-style: none; }
 .calendar-problem { width: 100%; padding: 12px 0; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: 14px; }
 .calendar-problem strong, .calendar-problem span { display: block; overflow-wrap: anywhere; }
 .calendar-problem span { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.5; }

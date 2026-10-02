@@ -648,11 +648,28 @@
     }).join("");
     const dayEntries = [...(history.get(calendarSelectedDate)?.values() || [])];
     const attempts = dayEntries.reduce((sum, item) => sum + item.attempts.length, 0);
+    const categoryEntries = new Map();
+    dayEntries.forEach((entry) => {
+      const category = entry.problem.category;
+      if (!categoryEntries.has(category)) categoryEntries.set(category, []);
+      categoryEntries.get(category).push(entry);
+    });
+    const openCategories = new Set(els.calendarDayProblems.dataset.date === calendarSelectedDate
+      ? [...els.calendarDayProblems.querySelectorAll("details[open]")].map((item) => item.dataset.category)
+      : []);
     els.calendarDayTitle.textContent = `${calendarSelectedDate.replace(/-/g, "/")} 做题记录`;
-    els.calendarDaySummary.textContent = dayEntries.length ? `${dayEntries.length} 道题 · ${attempts} 次完成` : "这一天还没有做题记录。";
-    els.calendarDayProblems.innerHTML = dayEntries.map(({ problem, attempts: entries }) => {
-      const detail = entries.map(({ round, rating }) => `第 ${round} 次${RATINGS[rating] ? ` · ${RATINGS[rating].label}` : ""}`).join("；");
-      return `<li><button type="button" class="calendar-problem" data-problem-id="${escapeHtml(problem.id)}"><strong>${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</strong><span>${escapeHtml(problem.category)} · ${escapeHtml(detail)}</span></button></li>`;
+    els.calendarDaySummary.textContent = dayEntries.length ? `${categoryEntries.size} 个专题 · ${dayEntries.length} 道题 · ${attempts} 次完成` : "这一天还没有做题记录。";
+    els.calendarDayProblems.dataset.date = calendarSelectedDate;
+    els.calendarDayProblems.innerHTML = [...categoryEntries].sort((a, b) => b[1].length - a[1].length).map(([category, items]) => {
+      const categoryAttempts = items.reduce((sum, item) => sum + item.attempts.length, 0);
+      const rows = items.map(({ problem, attempts: entries }) => {
+        const detail = entries.map(({ round, rating }) => `第 ${round} 次${RATINGS[rating] ? ` · ${RATINGS[rating].label}` : ""}`).join("；");
+        return `<li><button type="button" class="calendar-problem" data-problem-id="${escapeHtml(problem.id)}"><strong>${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</strong><span>${escapeHtml(detail)}</span></button></li>`;
+      }).join("");
+      return `<li><details class="calendar-category" data-category="${escapeHtml(category)}"${openCategories.has(category) ? " open" : ""}>
+        <summary class="calendar-category-summary"><strong>${escapeHtml(category)}</strong><span>${items.length} 道题 · ${categoryAttempts} 次完成</span><img class="calendar-category-chevron" src="icons/arrow-up.svg" width="16" height="16" alt="" aria-hidden="true"></summary>
+        <ul class="calendar-category-problems">${rows}</ul>
+      </details></li>`;
     }).join("");
   }
 
