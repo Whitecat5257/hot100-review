@@ -51,6 +51,8 @@ Object.assign(context, {
 vm.runInContext(source.slice(start, end), context);
 context.renderDueList();
 assert.equal((dueList.innerHTML.match(/data-due-problem-id=/g) || []).length, 9);
+assert.equal((dueList.innerHTML.match(/class="due-problem-button" type="button"/g) || []).length, 9);
+assert.ok(!dueList.innerHTML.includes('href="https://leetcode.cn/'));
 assert.equal((dueList.innerHTML.match(/<details /g) || []).length, 2);
 assert.ok(dueList.innerHTML.includes("逾期 3 题"));
 assert.ok(dueList.innerHTML.includes("今日 4 题"));
@@ -66,6 +68,22 @@ problems.forEach((problem) => { problem.info.due = false; });
 context.renderDueList();
 assert.ok(dueList.innerHTML.includes("due-empty"));
 assert.ok(!dueList.innerHTML.includes("<details"));
+
+const locateStart = source.indexOf("  function locateDueProblem(event) {");
+const locateEnd = source.indexOf("  function searchProblemLibrary()", locateStart);
+assert.ok(locateStart > 0 && locateEnd > locateStart);
+let located;
+context.findLibraryProblem = (id) => problems.find((problem) => problem.id === id);
+context.locateLibraryProblem = (problem) => { located = problem; };
+vm.runInContext(source.slice(locateStart, locateEnd), context);
+context.locateDueProblem({ target: { closest: () => ({ dataset: { dueProblemId: "7" } }) } });
+assert.equal(located, problems[6]);
+located = undefined;
+context.locateDueProblem({ target: { closest: () => null } });
+assert.equal(located, undefined);
+context.locateDueProblem({ target: { closest: () => ({ dataset: { dueProblemId: "missing" } }) } });
+assert.equal(located, undefined);
+assert.ok(source.includes('els.dueList.addEventListener("click", locateDueProblem)'));
 
 context.scheduleQuoteRefresh();
 assert.equal(timer.delay, 1050);

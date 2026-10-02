@@ -414,7 +414,7 @@
             <article class="due-card">
               <div>
                 <div class="due-title-row">
-                  <a class="due-problem-link" data-due-problem-id="${escapeHtml(problem.id)}" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener">${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</a>
+                  <button class="due-problem-button" type="button" data-due-problem-id="${escapeHtml(problem.id)}" title="定位到本题记录">${escapeHtml(problem.id)}. ${escapeHtml(problem.cn)}</button>
                   ${renderHuaweiBadge(problem, true)}
                 </div>
                 <p>下一次：第 ${info.nextRound + 1} 次 · 计划日期 ${info.dueDate}</p>
@@ -787,6 +787,13 @@
     });
   }
 
+  function locateDueProblem(event) {
+    const button = event.target.closest("[data-due-problem-id]");
+    if (!button) return;
+    const problem = findLibraryProblem(button.dataset.dueProblemId);
+    if (problem) locateLibraryProblem(problem);
+  }
+
   function searchProblemLibrary() {
     const query = els.newProblemIdInput.value.trim();
     if (!query) {
@@ -1042,6 +1049,7 @@
   });
 
   [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
+  els.dueList.addEventListener("click", locateDueProblem);
   window.addEventListener("scroll", updateBackToTop, { passive: true });
   els.backToTopButton.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
