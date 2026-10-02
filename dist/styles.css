@@ -137,10 +137,11 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .due-empty { grid-column: 1 / -1; padding: 22px; border: 1px dashed #bad0d5; border-radius: 7px; color: var(--muted); text-align: center; }
 
 .workspace { width: 100%; max-width: 100%; overflow: hidden; }
-.workspace-head { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.workspace-head { align-items: flex-start; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.workspace-head > div:first-child { flex-shrink: 0; }
 .huawei-legend { margin-top: 5px; color: var(--muted); font-size: 12px; }
 .huawei-legend strong { color: #8d2f36; }
-.filters { display: flex; gap: 8px; }
+.filters { display: flex; flex: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
 .filters input, .filters select { height: 40px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); padding: 0 12px; font-size: 14px; }
 .filters input { width: 230px; }
 .filters select { min-width: 132px; }
@@ -156,6 +157,16 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .huawei-tier-option.tier-b span { background: #2d708e; }
 .huawei-tier-option.tier-c span { background: #4d7075; }
 .huawei-tier-option:has(input:not(:checked)) span { opacity: .38; }
+.difficulty-filter { display: flex; align-items: center; gap: 5px; min-height: 40px; margin: 0; padding: 4px 7px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+.difficulty-filter legend { padding: 0 4px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.filters .difficulty-option { display: inline-flex; align-items: center; gap: 5px; width: auto; min-height: 28px; padding: 3px 6px; border: 1px solid #d2dfe2; border-radius: 5px; background: #f8fbfb; cursor: pointer; }
+.filters .difficulty-option:hover { border-color: #79aeb9; }
+.filters .difficulty-option input { width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--teal); }
+.difficulty-option span { font-size: 12px; font-weight: 800; white-space: nowrap; }
+.difficulty-option.easy span { color: #23734e; }
+.difficulty-option.medium span { color: #996100; }
+.difficulty-option.hard span { color: #ac3535; }
+.difficulty-option:has(input:not(:checked)) { background: #fff; }
 
 .category-section + .category-section { border-top: 10px solid var(--bg); }
 .category-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #f3f8f9; border-bottom: 1px solid var(--line); }
@@ -303,7 +314,7 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
   .overview { grid-template-columns: repeat(4, 1fr); }
   .progress-block { grid-column: 1 / -1; min-height: 86px; border-top: 1px solid var(--line); }
   .workspace-head { align-items: flex-start; flex-direction: column; }
-  .filters { width: 100%; flex-wrap: wrap; }
+  .filters { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
   .filters .search-field { flex: 1 1 240px; }
   .filters input { width: 100%; }
 }
@@ -337,6 +348,7 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
   .section-heading { align-items: flex-start; }
   .filters label, .filters select { width: 100%; }
   .filters .huawei-tier-filter { width: 100%; }
+  .filters .difficulty-filter { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

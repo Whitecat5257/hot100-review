@@ -99,6 +99,7 @@
     sourceFilter: document.querySelector("#sourceFilter"),
     huaweiTierFilter: document.querySelector("#huaweiTierFilter"),
     huaweiTierInputs: Array.from(document.querySelectorAll("#huaweiTierFilter input[type='checkbox']")),
+    difficultyInputs: Array.from(document.querySelectorAll("#difficultyFilter input[type='checkbox']")),
     statusFilter: document.querySelector("#statusFilter"),
     dataDialog: document.querySelector("#dataDialog"),
     clearDialog: document.querySelector("#clearDialog"),
@@ -459,6 +460,7 @@
     const category = els.categoryFilter.value;
     const source = els.sourceFilter.value;
     const selectedHuaweiTiers = new Set(els.huaweiTierInputs.filter((input) => input.checked).map((input) => input.value));
+    const selectedDifficulties = new Set(els.difficultyInputs.filter((input) => input.checked).map((input) => input.value));
     const status = els.statusFilter.value;
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
@@ -471,12 +473,13 @@
       || (source === "hot100" && !problem.isSupplement)
       || (source === "custom" && problem.isCustom);
     const huaweiTierMatch = source !== "huawei" || (problem.isHuawei && selectedHuaweiTiers.has(problem.huaweiTier));
+    const difficultyMatch = selectedDifficulties.has(problem.difficulty);
     const statusMatch = status === "all"
       || (status === "not-started" && completed === 0)
       || (status === "started" && completed > 0)
       || (status === "due" && info.due)
       || (status === "core-done" && completed >= CORE_ROUNDS);
-    return queryMatch && categoryMatch && sourceMatch && huaweiTierMatch && statusMatch;
+    return queryMatch && categoryMatch && sourceMatch && huaweiTierMatch && difficultyMatch && statusMatch;
   }
 
   function syncHuaweiTierFilter() {
@@ -774,6 +777,7 @@
     els.categoryFilter.value = "all";
     els.sourceFilter.value = "all";
     els.statusFilter.value = "all";
+    els.difficultyInputs.forEach((input) => { input.checked = true; });
     renderGroups();
     requestAnimationFrame(() => {
       const row = Array.from(els.problemGroups.querySelectorAll("tr[data-problem-id]"))
@@ -1058,6 +1062,7 @@
   document.addEventListener("visibilitychange", () => { if (!document.hidden) scheduleQuoteRefresh(); });
   window.addEventListener("pageshow", () => { scheduleQuoteRefresh(); updateBackToTop(); });
   els.huaweiTierInputs.forEach((input) => input.addEventListener("change", renderGroups));
+  els.difficultyInputs.forEach((input) => input.addEventListener("change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
   document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
   els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });

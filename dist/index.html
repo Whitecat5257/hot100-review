@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#087f8c">
   <title>Hot 100 复习台</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261002-due-locate">
+  <link rel="stylesheet" href="styles.css?v=20261002-difficulty-filter">
 </head>
 <body>
   <header class="app-header">
@@ -76,6 +76,12 @@
             <label class="huawei-tier-option tier-c"><input type="checkbox" value="C" checked><span>C</span></label>
           </fieldset>
           <label><span class="sr-only">进度</span><select id="statusFilter"><option value="all">全部进度</option><option value="not-started">还没开始</option><option value="started">已经开始</option><option value="due">今日到期</option><option value="core-done">五轮完成</option></select></label>
+          <fieldset id="difficultyFilter" class="difficulty-filter" aria-label="筛选力扣题目难度">
+            <legend>力扣难度</legend>
+            <label class="difficulty-option easy"><input type="checkbox" value="Easy" checked><span>简单</span></label>
+            <label class="difficulty-option medium"><input type="checkbox" value="Medium" checked><span>中等</span></label>
+            <label class="difficulty-option hard"><input type="checkbox" value="Hard" checked><span>困难</span></label>
+          </fieldset>
         </div>
       </div>
       <div id="problemGroups"></div>
@@ -183,6 +189,6 @@
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=20261002"></script>
-  <script src="app.js?v=20261002-due-locate"></script>
+  <script src="app.js?v=20261002-difficulty-filter"></script>
 </body>
 </html>
