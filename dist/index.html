@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#087f8c">
   <title>Hot 100 复习台</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261002-calendar-groups">
+  <link rel="stylesheet" href="styles.css?v=20261004-review-date">
 </head>
 <body>
   <header class="app-header">
@@ -102,6 +102,17 @@
     <img src="icons/arrow-up.svg" width="22" height="22" alt="" aria-hidden="true">
     <span class="back-to-top-tooltip" aria-hidden="true">回到顶部</span>
   </button>
+
+  <dialog id="reviewDateDialog" aria-labelledby="reviewDateTitle">
+    <form id="reviewDateForm" class="dialog-shell">
+      <div class="dialog-head"><h2 id="reviewDateTitle">下次复习日期</h2><button id="closeReviewDateButton" class="icon-button" type="button" aria-label="关闭复习日期设置" title="关闭">×</button></div>
+      <p id="reviewDateProblem" class="review-date-problem"></p>
+      <p id="reviewDateDefault" class="dialog-note"></p>
+      <label class="review-date-field" for="reviewDateInput">自定日期</label>
+      <input id="reviewDateInput" class="review-date-input" type="date" required>
+      <div class="review-date-actions"><button id="resetReviewDateButton" class="button secondary" type="button">恢复默认</button><button id="cancelReviewDateButton" class="button secondary" type="button">取消</button><button class="button primary" type="submit">保存日期</button></div>
+    </form>
+  </dialog>
 
   <dialog id="calendarDialog" class="calendar-dialog" aria-labelledby="calendarTitle">
     <div class="dialog-shell">
@@ -218,6 +229,6 @@
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=20261002"></script>
-  <script src="app.js?v=20261002-calendar-groups"></script>
+  <script src="app.js?v=20261004-review-date"></script>
 </body>
 </html>

@@ -98,6 +98,11 @@
     calendarDayTitle: document.querySelector("#calendarDayTitle"),
     calendarDaySummary: document.querySelector("#calendarDaySummary"),
     calendarDayProblems: document.querySelector("#calendarDayProblems"),
+    reviewDateDialog: document.querySelector("#reviewDateDialog"),
+    reviewDateForm: document.querySelector("#reviewDateForm"),
+    reviewDateInput: document.querySelector("#reviewDateInput"),
+    reviewDateProblem: document.querySelector("#reviewDateProblem"),
+    reviewDateDefault: document.querySelector("#reviewDateDefault"),
     dueList: document.querySelector("#dueList"),
     problemGroups: document.querySelector("#problemGroups"),
     emptyState: document.querySelector("#emptyState"),
@@ -151,6 +156,7 @@
   let displayedQuoteHour = null;
   let displayedDay = "";
   let calendarSelectedDate = "";
+  let pendingReviewProblemId = "";
 
   function todayISO() {
     const date = new Date();
@@ -296,7 +302,7 @@
     const rounds = Array.from({ length }, (_, index) => Boolean(sourceRounds[index] || sourceDates[index]));
     const dates = Array.from({ length }, (_, index) => rounds[index] ? normalizeDate(sourceDates[index]) : "");
     const ratings = Array.from({ length }, (_, index) => index >= CORE_ROUNDS && rounds[index] && RATINGS[sourceRatings[index]] ? sourceRatings[index] : "");
-    return { rounds, dates, ratings, note: typeof raw.note === "string" ? raw.note : "" };
+    return { rounds, dates, ratings, note: typeof raw.note === "string" ? raw.note : "", nextReviewDate: normalizeDate(raw.nextReviewDate) };
   }
 
   function normalizeProgress(rawProgress, allowedIds = validIds) {
@@ -335,7 +341,7 @@
     return record.rounds.filter(Boolean).length;
   }
 
-  function reviewInfo(problem) {
+  function defaultReviewInfo(problem) {
     const record = getRecord(problem.id);
     const completed = completedRounds(record);
     if (completed === 0) return { status: "not-started", text: "尚未开始", due: false, nextRound: 0 };
@@ -360,6 +366,38 @@
     const diff = daysBetween(todayISO(), dueDate);
     const text = diff < 0 ? `已超期 ${Math.abs(diff)} 天` : diff === 0 ? "今天" : `${diff} 天后`;
     return { status: completed >= CORE_ROUNDS ? "long-term" : "reviewing", text, due: diff <= 0, dueDate, nextRound: completed };
+  }
+
+  function reviewInfo(problem) {
+    const info = defaultReviewInfo(problem);
+    const record = getRecord(problem.id);
+    const dueDate = normalizeDate(record.nextReviewDate);
+    if (!dueDate || info.nextRound === 0) return info;
+    const diff = daysBetween(todayISO(), dueDate);
+    const text = diff < 0 ? `已超期 ${Math.abs(diff)} 天` : diff === 0 ? "今天" : `${diff} 天后`;
+    return { ...info, status: "custom-review", text, due: diff <= 0, dueDate, custom: true };
+  }
+
+  function openReviewDateDialog(id) {
+    const problem = problems.find((item) => item.id === id);
+    if (!problem || completedRounds(getRecord(id)) === 0) return;
+    pendingReviewProblemId = id;
+    const info = reviewInfo(problem);
+    const defaultInfo = defaultReviewInfo(problem);
+    els.reviewDateProblem.textContent = `${problem.id}. ${problem.cn}`;
+    els.reviewDateDefault.textContent = defaultInfo.dueDate ? `默认计划日期 ${defaultInfo.dueDate}` : `默认计划：${defaultInfo.text}`;
+    els.reviewDateInput.value = info.dueDate || todayISO();
+    els.reviewDateDialog.showModal();
+  }
+
+  function setNextReviewDate(id, value) {
+    if (!validIds.has(id) || (value && !normalizeDate(value))) return false;
+    const record = getRecord(id);
+    if (completedRounds(record) === 0) return false;
+    record.nextReviewDate = normalizeDate(value);
+    saveState();
+    render();
+    return true;
   }
 
   function difficultyText(value) {
@@ -537,7 +575,7 @@
     const visibleRounds = Math.max(CORE_ROUNDS, completed + 1);
     const nextClass = info.status === "pending" ? "next-review pending" : "next-review";
     const nextDetail = info.dueDate
-      ? `计划日期 ${info.dueDate}`
+      ? `${info.custom ? "自定日期" : "计划日期"} ${info.dueDate}`
       : completed === CORE_ROUNDS
         ? "可继续记录第 6 次"
         : completed > CORE_ROUNDS
@@ -558,7 +596,7 @@
         <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener"><span>${escapeHtml(problem.id)}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
-        <td class="col-next"><div class="${nextClass}"><span>${escapeHtml(info.text)}</span>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
+        <td class="col-next"><div class="${nextClass}"><div class="next-review-heading"><span>${escapeHtml(info.text)}</span>${completed > 0 ? `<button type="button" class="review-date-button" data-action="schedule-review" aria-label="调整 ${escapeHtml(problem.id)} 下次复习日期" title="调整下次复习日期"><img src="icons/calendar-days.svg" width="16" height="16" alt=""></button>` : ""}</div>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
         <td class="col-note"><div class="note-cell">${huaweiBadge}<input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意">${customActions}</div></td>
       </tr>`;
   }
@@ -705,6 +743,7 @@
 
   function updateRoundDate(problemId, round, value) {
     const record = getRecord(problemId);
+    const previousCompleted = completedRounds(record);
     ensureRound(record, round);
     if (value) {
       for (let index = 0; index <= round; index += 1) {
@@ -719,6 +758,7 @@
         record.ratings[index] = "";
       }
     }
+    if (completedRounds(record) !== previousCompleted) record.nextReviewDate = "";
     saveState();
     render();
   }
@@ -733,7 +773,7 @@
 
   function backupPayload() {
     return {
-      version: 4,
+      version: 5,
       app: "hot100-review-studio",
       exportedAt: new Date().toISOString(),
       reviewPolicy: { fixedDelays: FIXED_DELAYS, adaptiveAfterRound: CORE_ROUNDS, ratings: RATINGS },
@@ -1117,6 +1157,7 @@
           record.rounds[round] = true;
           record.dates[round] = date;
           record.ratings[round] = round >= CORE_ROUNDS ? input.rating : "";
+          record.nextReviewDate = "";
           saveState();
           render();
           const problem = problems.find((item) => item.id === id);
@@ -1142,6 +1183,11 @@
   }
 
   els.problemGroups.addEventListener("click", (event) => {
+    const scheduleButton = event.target.closest('[data-action="schedule-review"]');
+    if (scheduleButton) {
+      openReviewDateDialog(scheduleButton.closest("tr[data-problem-id]")?.dataset.problemId || "");
+      return;
+    }
     const deleteButton = event.target.closest('[data-action="delete-custom"]');
     if (deleteButton) {
       requestDeleteCustomProblem(deleteButton.closest("tr[data-problem-id]")?.dataset.problemId || "");
@@ -1172,6 +1218,18 @@
 
   [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   els.dueList.addEventListener("click", locateDueProblem);
+  els.reviewDateForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const date = normalizeDate(els.reviewDateInput.value);
+    if (!date) return;
+    if (setNextReviewDate(pendingReviewProblemId, date)) { els.reviewDateDialog.close(); showToast("下次复习日期已更新"); }
+  });
+  document.querySelector("#resetReviewDateButton").addEventListener("click", () => {
+    if (setNextReviewDate(pendingReviewProblemId, "")) { els.reviewDateDialog.close(); showToast("已恢复默认复习计划"); }
+  });
+  document.querySelector("#closeReviewDateButton").addEventListener("click", () => els.reviewDateDialog.close());
+  document.querySelector("#cancelReviewDateButton").addEventListener("click", () => els.reviewDateDialog.close());
+  els.reviewDateDialog.addEventListener("close", () => { pendingReviewProblemId = ""; });
   document.querySelector("#calendarButton").addEventListener("click", () => { selectCalendarDate(todayISO()); els.calendarDialog.showModal(); });
   document.querySelector("#closeCalendarButton").addEventListener("click", () => els.calendarDialog.close());
   document.querySelector("#calendarTodayButton").addEventListener("click", () => selectCalendarDate(todayISO()));
