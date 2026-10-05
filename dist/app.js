@@ -1255,8 +1255,10 @@
   els.huaweiTierInputs.forEach((input) => input.addEventListener("change", renderGroups));
   els.difficultyInputs.forEach((input) => input.addEventListener("change", renderGroups));
   document.querySelector("#showAllDueButton").addEventListener("click", () => { els.statusFilter.value = "due"; renderGroups(); document.querySelector("#problemListTitle").scrollIntoView({ behavior: "smooth" }); });
-  document.querySelector("#lookupProblemButton").addEventListener("click", searchProblemLibrary);
-  els.newProblemIdInput.addEventListener("keydown", (event) => { if (event.key === "Enter") searchProblemLibrary(); });
+  document.querySelector("#problemSearchForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    searchProblemLibrary();
+  });
   els.searchResultsList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-search-result-index]");
     if (!button) return;
