@@ -1,6 +1,12 @@
-# Hot 100 复习台
+# 知序 · 算法练习
 
-一个纯前端的 LeetCode Hot 100 做题与复习记录网站，也支持把 Hot 100 之外的力扣题加入自己的补充题库。
+一个纯前端的个人算法练习与长期复习网站，包含 LeetCode Hot 100、华为笔试题与个人补充题库。
+
+品牌标志为原创代码括号与递进路径，表达推演、练习和逐步掌握。名句区采用简约横幅装裱，100 句名言以东方大楷排成桌面/移动两套三倍清晰度字幅，仍按整点轮换。字体基于颜真卿《多宝塔碑》，版权归阿里妈妈；本站仅发布排印作品，不分发、改造字体文件。出处保留可访问文本链接，字幅加载失败时退回可读的楷体文本。存储键和备份数据格式保持不变。
+
+设计参考仅为构成方法，不复用商标：[IBM 的简练与节奏](https://www.ibm.com/history/logo)、[MIT Media Lab 的网格构成](https://www.pentagram.com/work/mit-media-lab)。字体来源：[阿里字体官网](https://www.alibabafonts.com/#/more)、[官方东方大楷说明与最新法律声明](https://www.iconfont.cn/fonts/detail?cnid=IhcTcFymWeyf)。不作商标可注册性承诺。
+
+字幅生成：`node scripts/render-quote-art.cjs <官方字体ZIP路径> <Python路径>`，需 Pillow 和 fontTools。字体由用户从官方渠道下载，仅在内存中读取，不改造或提交字库。
 
 ## 华为真题库
 
