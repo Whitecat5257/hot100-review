@@ -279,9 +279,11 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .delete-problem-button { min-height: 32px; padding: 4px 9px; border: 1px solid #e0abab; border-radius: 6px; background: #fff8f7; color: #a63c42; font-size: 12px; font-weight: 900; }
 .delete-problem-button:hover, .delete-problem-button:focus-visible { border-color: #bd565c; background: #ffefed; outline: 0; }
 .hidden { display: none !important; }
-.next-review-heading { display: flex; align-items: center; gap: 6px; }
+.next-review-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .review-date-button { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 5px; background: rgba(255,255,255,.55); cursor: pointer; }
 .review-date-button:hover, .review-date-button:focus-visible { border-color: var(--teal); outline: 0; background: white; }
+.review-tomorrow-button { flex-shrink: 0; min-height: 28px; padding: 0 7px; border: 1px solid #aecbd2; border-radius: 5px; color: #306774; background: #f4fafb; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.review-tomorrow-button:hover, .review-tomorrow-button:focus-visible { border-color: var(--teal); outline: 2px solid #d5e5e9; outline-offset: 1px; background: white; }
 .review-date-problem { margin-top: 18px; font-weight: 700; overflow-wrap: anywhere; }
 .review-date-field { display: block; margin: 18px 0 8px; font-size: 13px; font-weight: 700; }
 .review-date-input { width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: white; font: inherit; }

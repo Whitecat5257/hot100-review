@@ -400,6 +400,11 @@
     return true;
   }
 
+  function scheduleReviewTomorrow(id) {
+    const date = addDays(todayISO(), 1);
+    if (setNextReviewDate(id, date)) showToast(`已安排明天复习（${date}）`);
+  }
+
   function difficultyText(value) {
     return value === "Easy" ? "简单" : value === "Medium" ? "中等" : "困难";
   }
@@ -596,7 +601,7 @@
         <td class="col-problem"><a class="problem-link" href="https://leetcode.cn/problems/${escapeHtml(problem.slug)}/" target="_blank" rel="noopener"><span>${escapeHtml(problem.id)}</span> ${escapeHtml(problem.cn)} ${customBadge}</a>${englishTitle}</td>
         <td class="col-level"><span class="difficulty ${problem.difficulty.toLowerCase()}">${difficultyText(problem.difficulty)}</span></td>
         <td class="col-dates"><div class="round-grid">${Array.from({ length: visibleRounds }, (_, round) => renderRoundCell(record, round)).join("")}</div></td>
-        <td class="col-next"><div class="${nextClass}"><div class="next-review-heading"><span>${escapeHtml(info.text)}</span>${completed > 0 ? `<button type="button" class="review-date-button" data-action="schedule-review" aria-label="调整 ${escapeHtml(problem.id)} 下次复习日期" title="调整下次复习日期"><img src="icons/calendar-days.svg" width="16" height="16" alt=""></button>` : ""}</div>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
+        <td class="col-next"><div class="${nextClass}"><div class="next-review-heading"><span>${escapeHtml(info.text)}</span>${completed > 0 ? `<button type="button" class="review-date-button" data-action="schedule-review" aria-label="调整 ${escapeHtml(problem.id)} 下次复习日期" title="调整下次复习日期"><img src="icons/calendar-days.svg" width="16" height="16" alt=""></button><button type="button" class="review-tomorrow-button" data-action="review-tomorrow" aria-label="将 ${escapeHtml(problem.id)} 的下次复习安排到明天" title="明天重点复习">明天</button>` : ""}</div>${nextDetail ? `<small>${escapeHtml(nextDetail)}</small>` : ""}</div></td>
         <td class="col-note"><div class="note-cell">${huaweiBadge}<input class="note-input" data-action="note" type="text" value="${escapeHtml(record.note)}" placeholder="错因 / 模板 / 下次注意">${customActions}</div></td>
       </tr>`;
   }
@@ -1183,6 +1188,11 @@
   }
 
   els.problemGroups.addEventListener("click", (event) => {
+    const tomorrowButton = event.target.closest('[data-action="review-tomorrow"]');
+    if (tomorrowButton) {
+      scheduleReviewTomorrow(tomorrowButton.closest("tr[data-problem-id]")?.dataset.problemId || "");
+      return;
+    }
     const scheduleButton = event.target.closest('[data-action="schedule-review"]');
     if (scheduleButton) {
       openReviewDateDialog(scheduleButton.closest("tr[data-problem-id]")?.dataset.problemId || "");
