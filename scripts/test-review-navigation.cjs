@@ -39,6 +39,7 @@ const problems = Array.from({ length: 10 }, (_, index) => ({
 }));
 Object.assign(context, {
   Date: TestDate, Intl, problems, groups: subjects.map((subject) => [subject]),
+  document: { querySelector: () => ({ classList: { remove() {} } }) },
   els: { dueList, todayLabel: {}, quoteText: {}, quoteSource: {}, backToTopButton: {} },
   openDueCategories: new Set(), quoteTimer: 0, displayedQuoteHour: null, displayedDay: "",
   reviewInfo: (problem) => problem.info,
