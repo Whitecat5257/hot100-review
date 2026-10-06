@@ -5,6 +5,7 @@ const vm = require("node:vm");
 const source = fs.readFileSync(path.resolve(__dirname, "../dist/app.js"), "utf8");
 let saves = 0;
 let renders = 0;
+let toast = "";
 const state = {};
 const problems = [{ id: "1", cn: "两数之和" }];
 const els = {
@@ -14,7 +15,7 @@ const els = {
 const context = vm.createContext({
   state, problems, validIds: new Set(["1"]), els, pendingReviewProblemId: "", CORE_ROUNDS: 5,
   FIXED_DELAYS: [1, 4, 10, 21], RATINGS: { fluent: { days: 5 }, partial: { days: 3 }, none: { days: 1 } },
-  getRecord: (id) => state[id], saveState: () => { saves += 1; }, render: () => { renders += 1; }, customProblems: []
+  getRecord: (id) => state[id], saveState: () => { saves += 1; }, render: () => { renders += 1; }, showToast: (message) => { toast = message; }, customProblems: []
 });
 function load(from, to) {
   const start = source.indexOf(from);
@@ -78,6 +79,26 @@ assert.equal(context.reviewInfo(problems[0]).status, "not-started");
 assert.equal(context.setNextReviewDate("1", "2026-10-05"), false);
 assert.equal(context.normalizeRecord({ nextReviewDate: "bad" }).nextReviewDate, "");
 assert.equal(JSON.stringify(old), oldBefore);
+state["1"] = context.normalizeRecord({ dates: ["2026-10-01"], note: "keep me" });
+const historyBeforeTomorrow = JSON.stringify([state["1"].dates, state["1"].rounds, state["1"].ratings, state["1"].note]);
+for (const [today, tomorrow] of [["2026-10-06", "2026-10-07"], ["2026-10-31", "2026-11-01"], ["2026-12-31", "2027-01-01"], ["2028-02-28", "2028-02-29"]]) {
+  context.todayISO = () => today;
+  context.scheduleReviewTomorrow("1");
+  assert.equal(state["1"].nextReviewDate, tomorrow);
+  assert.equal(context.reviewInfo(problems[0]).dueDate, tomorrow);
+  assert.equal(context.reviewInfo(problems[0]).due, false);
+  assert.ok(toast.includes(tomorrow));
+}
+assert.equal(JSON.stringify([state["1"].dates, state["1"].rounds, state["1"].ratings, state["1"].note]), historyBeforeTomorrow);
+assert.equal(context.normalizeProgress(JSON.parse(JSON.stringify(context.backupPayload())).progress)["1"].nextReviewDate, "2028-02-29");
+context.todayISO = () => "2028-02-29";
+assert.equal(context.reviewInfo(problems[0]).due, true);
+context.setNextReviewDate("1", "");
+assert.equal(context.reviewInfo(problems[0]).custom, undefined);
+const savesBeforeUnknown = saves;
+context.scheduleReviewTomorrow("unknown");
+assert.equal(saves, savesBeforeUnknown);
+assert.ok(source.includes('data-action="review-tomorrow"'));
 assert.equal(saves, renders);
 assert.ok(source.includes('record.nextReviewDate = "";\n          saveState();') || source.includes('record.nextReviewDate = "";\r\n          saveState();'));
 console.log("PASS: default/custom due dates, restore, persistence, round lifecycle, rating edits, invalid dates, and unchanged history");
