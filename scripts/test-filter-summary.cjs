@@ -5,7 +5,8 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync(path.resolve(__dirname, "../dist/app.js"), "utf8");
 const els = {
-  searchInput: { value: "" }, categoryFilter: { value: "all" },
+  searchInput: { value: "" },
+  categoryInputs: ["数组与哈希", "栈与堆", "图论"].map((value) => ({ value, checked: true })),
   sourceFilter: { value: "all" }, statusFilter: { value: "all" },
   difficultyInputs: ["Easy", "Medium", "Hard"].map((value) => ({ value, checked: true })),
   huaweiTierInputs: ["S", "A", "B", "C"].map((value) => ({ value, checked: true })),
@@ -65,7 +66,7 @@ check(1, 0, [[0, 0], [1, 0], [0, 0]]);
 els.statusFilter.value = "started";
 check(1, 1, [[1, 1], [0, 0], [0, 0]]);
 els.statusFilter.value = "all";
-els.categoryFilter.value = "栈与堆";
+els.categoryInputs[0].checked = false;
 check(1, 0, [[0, 0], [1, 0], [0, 0]]);
 problems[2].completed = 1;
 check(1, 1, [[0, 0], [1, 1], [0, 0]]);
