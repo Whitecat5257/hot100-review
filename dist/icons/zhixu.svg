@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>知序</title>
+  <path d="M19 10 5 32l14 22M45 10l14 22-14 22" fill="none" stroke="#166b70" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M22 43h10V32h10V21" fill="none" stroke="#166b70" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M19 40h6v6h-6zM29 29h6v6h-6z" fill="#166b70"/>
+  <path d="M38 17h8v8h-8z" fill="#b94f43"/>
+</svg>
