@@ -501,6 +501,10 @@
     if (!quote) return;
     displayedQuoteHour = hour;
     els.quoteText.textContent = quote.text;
+    document.querySelector("#quoteSheet").classList.remove("art-ready");
+    const artId = String(window.REVIEW_INSPIRATION.quotes.indexOf(quote) + 1).padStart(3, "0");
+    document.querySelector("#quoteMobileArt").srcset = `quote-art/${artId}-mobile.png`;
+    document.querySelector("#quoteArt").src = `quote-art/${artId}-desktop.png`;
     els.quoteSource.textContent = `${quote.author ? `${quote.author} · ` : ""}《${quote.source}》`;
     els.quoteSource.href = quote.url;
   }
@@ -1129,7 +1133,7 @@
       {
         name: "get_due_reviews",
         title: "读取今日到期复习",
-        description: "读取当前 Hot 100 记录中今天已经到期的复习题目。",
+        description: "读取知序题库中今天已经到期的复习题目。",
         inputSchema: { type: "object", properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: true, untrustedContentHint: false },
         execute() {
@@ -1159,7 +1163,7 @@
         execute(input) {
           const id = String(input?.problemId || "");
           const date = normalizeDate(input?.date);
-          if (!validIds.has(id)) throw new Error("题号不在 Hot 100 列表中");
+          if (!validIds.has(id)) throw new Error("题号不在当前题库中");
           if (!date) throw new Error("日期格式无效");
           const record = getRecord(id);
           const round = completedRounds(record);
@@ -1218,6 +1222,8 @@
     });
   }
 
+  document.querySelector("#quoteArt").addEventListener("load", () => document.querySelector("#quoteSheet").classList.add("art-ready"));
+  document.querySelector("#quoteArt").addEventListener("error", () => document.querySelector("#quoteSheet").classList.remove("art-ready"));
   els.categoryFilterOptions.addEventListener("change", () => { syncCategorySelection(); renderGroups(); });
   document.querySelector("#selectAllCategoriesButton").addEventListener("click", () => { setCategorySelection(true); renderGroups(); });
   document.querySelector("#clearCategoriesButton").addEventListener("click", () => { setCategorySelection(false); renderGroups(); });

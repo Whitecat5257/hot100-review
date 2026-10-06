@@ -45,25 +45,33 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
   gap: 28px;
   align-items: center;
   justify-content: space-between;
-  min-height: 94px;
-  padding: 16px max(24px, calc((100vw - 1440px) / 2));
+  min-height: 164px;
+  padding: 20px max(24px, calc((100vw - 1440px) / 2));
   border-bottom: 1px solid rgba(214,226,229,.9);
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(16px);
 }
 
-.brand-block { display: flex; align-items: center; gap: 14px; }
-.brand-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 8px; background: var(--teal); color: #fff; font-size: 18px; font-weight: 900; box-shadow: 6px 6px 0 var(--coral); }
+.brand-block { display: flex; align-items: center; gap: 16px; min-width: 220px; }
+.brand-mark { display: block; flex-shrink: 0; width: 60px; height: 60px; }
+.brand-caption { margin-bottom: 5px; color: #53767b; font-size: 11px; }
+.brand-block h1 { font-family: "Songti SC", SimSun, serif; font-size: 38px; font-weight: 700; line-height: 1.2; letter-spacing: 0; }
 h1, h2, h3, p { margin: 0; }
-h1 { font-size: clamp(24px, 3vw, 34px); line-height: 1.05; }
+h1 { font-size: 34px; line-height: 1.05; }
 h2 { font-size: 22px; }
 h3 { font-size: 18px; }
 .eyebrow { color: var(--teal); font-size: 12px; font-weight: 900; letter-spacing: .13em; }
 .today-label { margin-top: 4px; color: var(--muted); font-size: 13px; }
-.header-quote { min-width: 0; max-width: 480px; margin: 0 auto; padding-left: 20px; border-left: 2px solid #bdced0; }
-.header-quote blockquote { margin: 0; color: #344c53; font-family: "Songti SC", SimSun, "Noto Serif CJK SC", serif; font-size: 17px; font-weight: 600; line-height: 1.8; letter-spacing: 0; overflow-wrap: anywhere; text-wrap: pretty; }
-.header-quote figcaption { margin-top: 4px; font-size: 11px; line-height: 1.6; }
-.header-quote a { color: #59717a; text-decoration: none; }
+.header-quote { min-width: 0; width: 100%; max-width: 780px; margin: 0 auto; padding: 5px; border: 1px solid #c8c9c2; background: #e9ece7; box-shadow: 0 2px 5px rgba(36, 52, 46, .04); }
+.quote-sheet { min-width: 0; min-height: 112px; padding: 14px 22px 10px; border: 1px solid #d6d8ce; background: #fdfdfb; }
+.header-quote blockquote { position: relative; margin: 0; color: #2c3735; font-family: KaiTi, STKaiti, serif; font-size: 26px; font-weight: 400; line-height: 1.7; letter-spacing: 0; overflow-wrap: anywhere; writing-mode: horizontal-tb; }
+.quote-art { display: none; }
+.quote-art img { display: block; width: 100%; height: auto; }
+.quote-sheet.art-ready .quote-art { display: block; }
+.quote-sheet.art-ready #quoteText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.header-quote figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 11px; line-height: 1.6; }
+.quote-seal { flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #b45449; color: #a54840; font-family: KaiTi, STKaiti, serif; font-size: 11px; }
+.header-quote a { color: #727c76; text-decoration: none; overflow-wrap: anywhere; }
 .header-quote a:hover { color: var(--teal-dark); text-decoration: underline; }
 .back-to-top { position: fixed; top: 132px; right: max(20px, calc((100vw - 1440px) / 4 - 22px)); z-index: 25; display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border: 1px solid #b2c8cc; border-radius: 8px; background: #fff; color: var(--ink); box-shadow: 0 4px 15px rgba(30, 66, 76, .12); }
 .back-to-top[hidden] { display: none; }
@@ -417,8 +425,7 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 
 @media (max-width: 1200px) {
   .app-header { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; }
-  .header-quote { grid-row: 2; grid-column: 1 / -1; max-width: none; margin: 0; padding-left: 14px; }
-  .header-quote blockquote { font-size: 15px; }
+  .header-quote { grid-row: 2; grid-column: 1 / -1; max-width: 780px; margin: 0 auto; }
 }
 
 @media (max-width: 1080px) {
@@ -432,9 +439,13 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
 
 @media (max-width: 700px) {
   .app-header { position: static; display: grid; grid-template-columns: minmax(0, 1fr); align-items: flex-start; gap: 14px; padding: 14px 16px; }
-  .brand-mark { width: 45px; height: 45px; font-size: 15px; }
+  .brand-mark { width: 50px; height: 50px; }
+  .brand-block { min-width: 0; gap: 12px; }
+  .brand-block h1 { font-size: 34px; }
   .header-actions { width: 100%; align-items: stretch; flex-wrap: wrap; justify-content: flex-start; }
-  .header-quote { grid-row: 2; grid-column: 1; padding-left: 12px; }
+  .header-quote { grid-row: 2; grid-column: 1; padding: 4px; }
+  .quote-sheet { padding: 12px 14px 8px; }
+  .header-quote blockquote { font-size: 22px; }
   .back-to-top { right: 14px; bottom: max(20px, env(safe-area-inset-bottom)); width: 44px; height: 44px; }
   .candidate-button { grid-template-columns: 72px minmax(0, 1fr); }
   .candidate-button small { grid-column: 2; }

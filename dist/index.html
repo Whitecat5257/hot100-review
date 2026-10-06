@@ -3,25 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="LeetCode Hot 100 做题与长期复习记录">
+  <meta name="description" content="知序，个人算法练习与长期复习记录。收录力扣、华为笔试与个人补充题目。">
   <meta name="theme-color" content="#087f8c">
-  <title>Hot 100 复习台</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261006-category-multi">
+  <title>知序 · 算法练习</title>
+  <link rel="icon" type="image/svg+xml" href="icons/zhixu.svg?v=20261006">
+  <link rel="stylesheet" href="styles.css?v=20261006-zhixu">
 </head>
 <body>
   <header class="app-header">
     <div class="brand-block">
-      <div class="brand-mark" aria-hidden="true">100</div>
+      <img class="brand-mark" src="icons/zhixu.svg" width="60" height="60" alt="" aria-hidden="true">
       <div>
-        <p class="eyebrow">LEETCODE REVIEW</p>
-        <h1>Hot 100 复习台</h1>
+        <p class="brand-caption">算法练习 · 长期复习</p>
+        <h1>知序</h1>
         <p id="todayLabel" class="today-label"></p>
       </div>
     </div>
-    <figure id="headerQuote" class="header-quote" aria-label="励志名句">
-      <blockquote id="quoteText">天行健，君子以自强不息。</blockquote>
-      <figcaption><a id="quoteSource" href="https://zh.wikisource.org/zh-hans/周易/乾" target="_blank" rel="noopener">《周易·乾》</a></figcaption>
+    <figure id="headerQuote" class="header-quote" aria-label="励志名句" title="字幅字体：阿里妈妈东方大楷，版权归阿里妈妈">
+      <div id="quoteSheet" class="quote-sheet">
+        <blockquote><span id="quoteText">天行健，君子以自强不息。</span><picture class="quote-art"><source id="quoteMobileArt" media="(max-width: 700px)" srcset="quote-art/001-mobile.png"><img id="quoteArt" src="quote-art/001-desktop.png" alt="" decoding="async"></picture></blockquote>
+        <figcaption><a id="quoteSource" href="https://zh.wikisource.org/zh-hans/周易/乾" target="_blank" rel="noopener">《周易·乾》</a><span class="quote-seal" aria-hidden="true">日课</span></figcaption>
+      </div>
     </figure>
     <div class="header-actions">
       <button id="dataButton" class="button secondary" type="button">数据</button>
@@ -239,6 +241,6 @@
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=20261002"></script>
-  <script src="app.js?v=20261006-category-multi"></script>
+  <script src="app.js?v=20261006-zhixu"></script>
 </body>
 </html>
