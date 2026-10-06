@@ -143,7 +143,7 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .due-date.due-today { color: #3b7883; }
 .due-empty { grid-column: 1 / -1; padding: 22px; border: 1px dashed #bad0d5; border-radius: 7px; color: var(--muted); text-align: center; }
 
-.workspace { width: 100%; max-width: 100%; overflow: hidden; }
+.workspace { width: 100%; max-width: 100%; overflow: visible; }
 .workspace-head { align-items: flex-start; padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .workspace-head > div:first-child { flex-shrink: 0; }
 .huawei-legend { margin-top: 5px; color: var(--muted); font-size: 12px; }
@@ -152,6 +152,27 @@ main { width: min(1440px, calc(100% - 32px)); margin: 22px auto 56px; }
 .filters input, .filters select { height: 40px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); padding: 0 12px; font-size: 14px; }
 .filters input { width: 230px; }
 .filters select { min-width: 132px; }
+.category-filter { position: relative; flex: 0 0 158px; min-width: 0; }
+.category-filter summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--ink); font-size: 14px; cursor: pointer; list-style: none; }
+.category-filter summary::-webkit-details-marker { display: none; }
+.category-filter summary span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-filter summary img { flex-shrink: 0; transition: transform .15s ease; }
+.category-filter[open] summary img { transform: rotate(180deg); }
+.category-filter summary:hover, .category-filter[open] summary { border-color: #79aeb9; }
+.category-filter summary:focus-visible { outline: 2px solid #aecbd2; outline-offset: 2px; }
+.category-filter-panel { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: 280px; max-width: calc(100vw - 48px); max-height: 410px; overflow-y: auto; padding: 12px; border: 1px solid #b8cdd2; border-radius: 8px; background: white; box-shadow: 0 12px 32px rgba(24, 58, 66, .16); }
+.category-filter.opens-up .category-filter-panel { top: auto; bottom: calc(100% + 8px); }
+.category-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 4px 10px; font-size: 13px; }
+.category-filter-head > span { color: var(--muted); font-size: 12px; }
+.category-filter-actions { display: flex; align-items: center; gap: 8px; padding: 0 4px 10px; border-bottom: 1px solid var(--line); }
+.category-filter-actions button { min-height: 30px; padding: 3px 10px; border: 1px solid #d2dfe2; border-radius: 5px; background: #f5fafb; color: #306774; font: inherit; font-size: 12px; cursor: pointer; }
+.category-filter-actions button:hover { border-color: var(--teal); background: white; }
+.category-filter-actions button:focus-visible { outline: 2px solid #aecbd2; outline-offset: 1px; }
+.category-filter-options { display: grid; gap: 2px; margin: 6px 0 0; padding: 0; border: 0; }
+.filters .category-filter-option { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 6px 8px; border-radius: 4px; color: var(--ink); font-size: 13px; cursor: pointer; }
+.category-filter-option:hover, .category-filter-option:focus-within { background: #eff6f7; }
+.category-filter-option:has(input:checked) { color: #306774; }
+.filters .category-filter-option input { flex-shrink: 0; width: 16px; height: 16px; margin: 0; padding: 0; border-radius: 3px; accent-color: var(--teal); }
 .huawei-tier-filter { display: flex; align-items: center; gap: 5px; min-height: 40px; margin: 0; padding: 4px 7px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
 .huawei-tier-filter[hidden] { display: none; }
 .huawei-tier-filter legend { width: auto; padding: 0 4px; color: var(--muted); font-size: 11px; font-weight: 800; }
@@ -435,6 +456,8 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
   .due-card p { font-size: 11px; }
   .section-heading { align-items: flex-start; }
   .filters label, .filters select { width: 100%; }
+  .category-filter { flex: 1 1 100%; }
+  .category-filter-panel { width: 100%; max-width: none; }
   .filters .huawei-tier-filter { width: 100%; }
   .filters .difficulty-filter { width: 100%; }
 }

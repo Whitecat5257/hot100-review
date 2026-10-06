@@ -112,6 +112,11 @@
     filterCategorySummary: document.querySelector("#filterCategorySummary"),
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
+    categoryFilterLabel: document.querySelector("#categoryFilterLabel"),
+    categoryFilterPanel: document.querySelector("#categoryFilterPanel"),
+    categoryFilterOptions: document.querySelector("#categoryFilterOptions"),
+    categorySelectionCount: document.querySelector("#categorySelectionCount"),
+    categoryInputs: [],
     sourceFilter: document.querySelector("#sourceFilter"),
     huaweiTierFilter: document.querySelector("#huaweiTierFilter"),
     huaweiTierInputs: Array.from(document.querySelectorAll("#huaweiTierFilter input[type='checkbox']")),
@@ -512,7 +517,7 @@
 
   function matchesFilters(problem) {
     const query = els.searchInput.value.trim().toLowerCase();
-    const category = els.categoryFilter.value;
+    const selectedCategories = new Set(els.categoryInputs.filter((input) => input.checked).map((input) => input.value));
     const source = els.sourceFilter.value;
     const selectedHuaweiTiers = new Set(els.huaweiTierInputs.filter((input) => input.checked).map((input) => input.value));
     const selectedDifficulties = new Set(els.difficultyInputs.filter((input) => input.checked).map((input) => input.value));
@@ -522,7 +527,7 @@
     const info = reviewInfo(problem);
     const haystack = `${problem.id} ${problem.cn} ${problem.en} ${problem.category} ${problem.isHuawei ? `华为 ${problem.huaweiTier}级 ${problem.huaweiTierLabel}` : ""}`.toLowerCase();
     const queryMatch = !query || haystack.includes(query);
-    const categoryMatch = category === "all" || category === problem.category;
+    const categoryMatch = selectedCategories.has(problem.category);
     const sourceMatch = source === "all"
       || (source === "huawei" && problem.isHuawei)
       || (source === "hot100" && !problem.isSupplement)
@@ -937,7 +942,8 @@
 
   function locateLibraryProblem(problem) {
     els.searchInput.value = "";
-    els.categoryFilter.value = "all";
+    setCategorySelection(true);
+    els.categoryFilter.open = false;
     els.sourceFilter.value = "all";
     els.statusFilter.value = "all";
     els.difficultyInputs.forEach((input) => { input.checked = true; });
@@ -1177,15 +1183,55 @@
     });
   }
 
+  function syncCategorySelection() {
+    const selected = els.categoryInputs.filter((input) => input.checked);
+    els.categoryFilterLabel.textContent = selected.length === els.categoryInputs.length ? "全部专题"
+      : selected.length === 0 ? "未选择专题"
+        : selected.length === 1 ? selected[0].value : `已选 ${selected.length} 个专题`;
+    els.categorySelectionCount.textContent = `已选 ${selected.length} / ${els.categoryInputs.length}`;
+  }
+
+  function setCategorySelection(checked) {
+    els.categoryInputs.forEach((input) => { input.checked = checked; });
+    syncCategorySelection();
+  }
+
+  function positionCategoryPanel() {
+    const rect = els.categoryFilter.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - 12;
+    const topInset = window.matchMedia("(max-width: 1839px)").matches ? 78 : 12;
+    const above = rect.top - topInset;
+    const opensUp = below < 410 && above > below;
+    els.categoryFilter.classList.toggle("opens-up", opensUp);
+    els.categoryFilterPanel.style.maxHeight = `${Math.max(100, Math.min(410, opensUp ? above : below))}px`;
+  }
+
   function initFilters() {
+    els.categoryFilterOptions.innerHTML = groups.map(([category]) => `<label class="category-filter-option"><input type="checkbox" value="${escapeHtml(category)}" checked><span>${escapeHtml(category)}</span></label>`).join("");
+    els.categoryInputs = Array.from(els.categoryFilterOptions.querySelectorAll('input[type="checkbox"]'));
+    syncCategorySelection();
     groups.forEach(([category]) => {
       const option = document.createElement("option");
       option.value = category;
       option.textContent = category;
-      els.categoryFilter.appendChild(option);
-      els.newProblemCategory.appendChild(option.cloneNode(true));
+      els.newProblemCategory.appendChild(option);
     });
   }
+
+  els.categoryFilterOptions.addEventListener("change", () => { syncCategorySelection(); renderGroups(); });
+  document.querySelector("#selectAllCategoriesButton").addEventListener("click", () => { setCategorySelection(true); renderGroups(); });
+  document.querySelector("#clearCategoriesButton").addEventListener("click", () => { setCategorySelection(false); renderGroups(); });
+  els.categoryFilter.addEventListener("toggle", () => { if (els.categoryFilter.open) positionCategoryPanel(); });
+  document.addEventListener("click", (event) => { if (!els.categoryFilter.contains(event.target)) els.categoryFilter.open = false; });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && els.categoryFilter.open) {
+      event.preventDefault();
+      els.categoryFilter.open = false;
+      els.categoryFilter.querySelector("summary").focus({ preventScroll: true });
+    }
+  });
+  window.addEventListener("resize", () => { if (els.categoryFilter.open) positionCategoryPanel(); });
+  window.addEventListener("scroll", () => { if (els.categoryFilter.open) positionCategoryPanel(); }, { passive: true });
 
   els.problemGroups.addEventListener("click", (event) => {
     const tomorrowButton = event.target.closest('[data-action="review-tomorrow"]');
@@ -1226,7 +1272,7 @@
     saveState();
   });
 
-  [els.searchInput, els.categoryFilter, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
+  [els.searchInput, els.sourceFilter, els.statusFilter].forEach((control) => control.addEventListener(control === els.searchInput ? "input" : "change", renderGroups));
   els.dueList.addEventListener("click", locateDueProblem);
   els.reviewDateForm.addEventListener("submit", (event) => {
     event.preventDefault();

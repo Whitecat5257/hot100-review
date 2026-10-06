@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#087f8c">
   <title>Hot 100 复习台</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M18 17v30M18 32h19c10 0 10-15 0-15H18m18 15c12 0 13 15 2 15H18' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='47' r='6' fill='%23ff8f5b'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20261006-review-tomorrow">
+  <link rel="stylesheet" href="styles.css?v=20261006-category-multi">
 </head>
 <body>
   <header class="app-header">
@@ -69,7 +69,14 @@
         </div>
         <div class="filters">
           <label class="search-field"><span class="sr-only">搜索题目</span><input id="searchInput" type="search" placeholder="搜索题号或题名"></label>
-          <label><span class="sr-only">专题</span><select id="categoryFilter"><option value="all">全部专题</option></select></label>
+          <details id="categoryFilter" class="category-filter">
+            <summary aria-label="选择专题"><span id="categoryFilterLabel">全部专题</span><img src="icons/chevron-down.svg" width="16" height="16" alt=""></summary>
+            <div id="categoryFilterPanel" class="category-filter-panel">
+              <div class="category-filter-head"><strong>专题筛选</strong><span id="categorySelectionCount">已选 0 / 0</span></div>
+              <div class="category-filter-actions"><button id="selectAllCategoriesButton" type="button">全选</button><button id="clearCategoriesButton" type="button">取消全选</button></div>
+              <fieldset id="categoryFilterOptions" class="category-filter-options"><legend class="sr-only">选择要显示的专题</legend></fieldset>
+            </div>
+          </details>
           <label><span class="sr-only">来源</span><select id="sourceFilter"><option value="all">全部来源</option><option value="huawei">华为题库</option><option value="hot100">Hot 100</option><option value="custom">我的补充</option></select></label>
           <fieldset id="huaweiTierFilter" class="huawei-tier-filter" aria-label="筛选华为题目等级" hidden>
             <legend>华为等级</legend>
@@ -232,6 +239,6 @@
   <script src="huawei-questions.js?v=20260929"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=20261002"></script>
-  <script src="app.js?v=20261006-review-tomorrow"></script>
+  <script src="app.js?v=20261006-category-multi"></script>
 </body>
 </html>
