@@ -81,7 +81,6 @@
   const els = {
     todayLabel: document.querySelector("#todayLabel"),
     quoteText: document.querySelector("#quoteText"),
-    quoteSource: document.querySelector("#quoteSource"),
     backToTopButton: document.querySelector("#backToTopButton"),
     startedMetric: document.querySelector("#startedMetric"),
     startedTotal: document.querySelector("#startedTotal"),
@@ -503,10 +502,8 @@
     els.quoteText.textContent = quote.text;
     document.querySelector("#quoteSheet").classList.remove("art-ready");
     const artId = String(window.REVIEW_INSPIRATION.quotes.indexOf(quote) + 1).padStart(3, "0");
-    document.querySelector("#quoteMobileArt").srcset = `quote-art/${artId}-mobile.png`;
-    document.querySelector("#quoteArt").src = `quote-art/${artId}-desktop.png`;
-    els.quoteSource.textContent = `${quote.author ? `${quote.author} · ` : ""}《${quote.source}》`;
-    els.quoteSource.href = quote.url;
+    document.querySelector("#quoteMobileArt").srcset = `quote-art/${artId}-mobile.png?v=xizhi`;
+    document.querySelector("#quoteArt").src = `quote-art/${artId}-desktop.png?v=xizhi`;
   }
 
   function scheduleQuoteRefresh() {

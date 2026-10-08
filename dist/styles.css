@@ -62,17 +62,15 @@ h2 { font-size: 22px; }
 h3 { font-size: 18px; }
 .eyebrow { color: var(--teal); font-size: 12px; font-weight: 900; letter-spacing: .13em; }
 .today-label { margin-top: 4px; color: var(--muted); font-size: 13px; }
-.header-quote { min-width: 0; width: 100%; max-width: 780px; margin: 0 auto; padding: 5px; border: 1px solid #c8c9c2; background: #e9ece7; box-shadow: 0 2px 5px rgba(36, 52, 46, .04); }
-.quote-sheet { min-width: 0; min-height: 112px; padding: 14px 22px 10px; border: 1px solid #d6d8ce; background: #fdfdfb; }
-.header-quote blockquote { position: relative; margin: 0; color: #2c3735; font-family: KaiTi, STKaiti, serif; font-size: 26px; font-weight: 400; line-height: 1.7; letter-spacing: 0; overflow-wrap: anywhere; writing-mode: horizontal-tb; }
+.header-quote { min-width: 0; width: 100%; max-width: 780px; margin: 0 auto; padding: 7px 9px; border: 1px solid #b8b9a8; background: repeating-linear-gradient(0deg, transparent 0 2px, #67765a08 2px 3px), #d5d7c6; box-shadow: 0 2px 5px rgba(36, 52, 46, .06); }
+.quote-sheet { position: relative; isolation: isolate; display: grid; align-items: center; min-width: 0; min-height: 112px; padding: 23px 24px; border: 1px solid #95694f; background: #f8f6ee; overflow: hidden; }
+.quote-sheet::before { content: ""; position: absolute; z-index: -2; inset: 13px 0; background: url("quote-art/ink-plum.png") right center / auto 170% no-repeat; opacity: .13; filter: grayscale(1); pointer-events: none; }
+.quote-sheet::after { content: ""; position: absolute; z-index: -1; inset: 0; border-block: 13px solid transparent; border-image: url("quote-art/brocade.png") 42 repeat; border-inline: 0; pointer-events: none; }
+.header-quote blockquote { position: relative; margin: 0; color: #191917; font-family: STXingkai, KaiTi, STKaiti, serif; font-size: 28px; font-weight: 400; line-height: 1.7; letter-spacing: 0; overflow-wrap: anywhere; writing-mode: horizontal-tb; }
 .quote-art { display: none; }
 .quote-art img { display: block; width: 100%; height: auto; }
 .quote-sheet.art-ready .quote-art { display: block; }
 .quote-sheet.art-ready #quoteText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.header-quote figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 11px; line-height: 1.6; }
-.quote-seal { flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #b45449; color: #a54840; font-family: KaiTi, STKaiti, serif; font-size: 11px; }
-.header-quote a { color: #727c76; text-decoration: none; overflow-wrap: anywhere; }
-.header-quote a:hover { color: var(--teal-dark); text-decoration: underline; }
 .back-to-top { position: fixed; top: 132px; right: max(20px, calc((100vw - 1440px) / 4 - 22px)); z-index: 25; display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border: 1px solid #b2c8cc; border-radius: 8px; background: #fff; color: var(--ink); box-shadow: 0 4px 15px rgba(30, 66, 76, .12); }
 .back-to-top[hidden] { display: none; }
 .back-to-top:hover { border-color: var(--teal); box-shadow: 0 6px 20px rgba(30, 66, 76, .18); }
@@ -443,8 +441,8 @@ dialog::backdrop { background: rgba(10,35,42,.52); backdrop-filter: blur(4px); }
   .brand-block { min-width: 0; gap: 12px; }
   .brand-block h1 { font-size: 34px; }
   .header-actions { width: 100%; align-items: stretch; flex-wrap: wrap; justify-content: flex-start; }
-  .header-quote { grid-row: 2; grid-column: 1; padding: 4px; }
-  .quote-sheet { padding: 12px 14px 8px; }
+  .header-quote { grid-row: 2; grid-column: 1; padding: 6px; }
+  .quote-sheet { padding: 25px 15px; }
   .header-quote blockquote { font-size: 22px; }
   .back-to-top { right: 14px; bottom: max(20px, env(safe-area-inset-bottom)); width: 44px; height: 44px; }
   .candidate-button { grid-template-columns: 72px minmax(0, 1fr); }
