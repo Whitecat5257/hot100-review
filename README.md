@@ -2,11 +2,13 @@
 
 一个纯前端的个人算法练习与长期复习网站，包含 LeetCode Hot 100、华为笔试题与个人补充题库。
 
-品牌标志为原创代码括号与递进路径，表达推演、练习和逐步掌握。名句区采用简约横幅装裱，100 句名言以东方大楷排成桌面/移动两套三倍清晰度字幅，仍按整点轮换。字体基于颜真卿《多宝塔碑》，版权归阿里妈妈；本站仅发布排印作品，不分发、改造字体文件。出处保留可访问文本链接，字幅加载失败时退回可读的楷体文本。存储键和备份数据格式保持不变。
+品牌标志为原创代码括号与递进路径，表达推演、练习和逐步掌握。名句区采用上下赭红锦边、浅色纸心的横幅装裱，100 句名言以王羲之书法字体排成桌面/移动两套高清字幅，仍按整点轮换。纸面使用低透明度墨梅枝花，文字保持墨黑。名句区不显示出处、印章、超链接或鼠标提示；字幅加载失败时保留可读文本。存储键和备份数据格式保持不变。
 
-设计参考仅为构成方法，不复用商标：[IBM 的简练与节奏](https://www.ibm.com/history/logo)、[MIT Media Lab 的网格构成](https://www.pentagram.com/work/mit-media-lab)。字体来源：[阿里字体官网](https://www.alibabafonts.com/#/more)、[官方东方大楷说明与最新法律声明](https://www.iconfont.cn/fonts/detail?cnid=IhcTcFymWeyf)。不作商标可注册性承诺。
+设计参考仅为构成方法，不复用商标：[IBM 的简练与节奏](https://www.ibm.com/history/logo)、[MIT Media Lab 的网格构成](https://www.pentagram.com/work/mit-media-lab)。不作商标可注册性承诺。
 
-字幅生成：`node scripts/render-quote-art.cjs <官方字体ZIP路径> <Python路径>`，需 Pillow 和 fontTools。字体由用户从官方渠道下载，仅在内存中读取，不改造或提交字库。
+字幅生成：`node scripts/render-quote-art.cjs <本地TTF或OTF字体路径> <Python路径>`，需 Pillow 和 fontTools。当前字体为 SCFwxz（王羲之书法字体），[下载页](https://www.ypppt.com/article/2018/5370.html)标注仅供个人学习；本站作为个人算法学习工具仅发布排印图片，不分发字体软件，不用于商业品牌字标。
+
+墨梅来源：[故宫博物院《赵雍等元五家合绘卷》中的王冕《墨梅图》](https://www.dpm.org.cn/collection/paint/228508.html)，[公有领域作品说明](https://commons.wikimedia.org/wiki/File:Wang_Mian-Ink_Plum.jpg)。`quote-art/ink-plum.png` 为图像编辑提取的枝花透明素材，移除了原画题字、落款、印章与纸底；`quote-art/brocade.png` 为生成的装裱锦纹。页面不展示素材链接或悬浮说明。
 
 ## 华为真题库
 
