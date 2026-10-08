@@ -40,7 +40,7 @@ const problems = Array.from({ length: 10 }, (_, index) => ({
 Object.assign(context, {
   Date: TestDate, Intl, problems, groups: subjects.map((subject) => [subject]),
   document: { querySelector: () => ({ classList: { remove() {} } }) },
-  els: { dueList, todayLabel: {}, quoteText: {}, quoteSource: {}, backToTopButton: {} },
+  els: { dueList, todayLabel: {}, quoteText: {}, backToTopButton: {} },
   openDueCategories: new Set(), quoteTimer: 0, displayedQuoteHour: null, displayedDay: "",
   reviewInfo: (problem) => problem.info,
   todayISO: () => new Date(now).toLocaleDateString("en-CA"),
@@ -94,7 +94,6 @@ assert.equal(context.els.quoteText.textContent, firstQuote);
 now += 1050;
 timer.callback();
 assert.notEqual(context.els.quoteText.textContent, firstQuote);
-assert.ok(context.els.quoteSource.href.startsWith("https://zh.wikisource.org/"));
 now = new Date("2026-10-03T00:00:01+08:00").getTime();
 context.scheduleQuoteRefresh();
 assert.equal(renderCount, 1);

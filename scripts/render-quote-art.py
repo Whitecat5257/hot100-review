@@ -12,8 +12,12 @@ sys.stdin.reconfigure(encoding="utf-8")
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 quotes = json.load(sys.stdin)
-with zipfile.ZipFile(sys.argv[1]) as archive:
-    font_bytes = archive.read("AlimamaDongFangDaKai-Regular.ttf")
+source = Path(sys.argv[1])
+if zipfile.is_zipfile(source):
+    with zipfile.ZipFile(source) as archive:
+        font_bytes = archive.read(next(name for name in archive.namelist() if name.lower().endswith((".ttf", ".otf"))))
+else:
+    font_bytes = source.read_bytes()
 font = ImageFont.truetype(io.BytesIO(font_bytes), 84)
 coverage = TTFont(io.BytesIO(font_bytes)).getBestCmap()
 missing = sorted({c for quote in quotes for c in quote["text"] if ord(c) not in coverage})
@@ -45,6 +49,6 @@ for index, quote in enumerate(quotes, 1):
         image = Image.new("RGBA", (columns * 84 + 24, len(lines) * 126), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
         for row, line in enumerate(lines):
-            draw.text((12, row * 126 + 2), line, font=font, fill=(40, 48, 45, 255))
+            draw.text((12, row * 126 + 2), line, font=font, fill=(25, 25, 23, 255))
         image.save(out / f"{index:03d}-{mode}.png", optimize=True)
 print(f"Rendered {len(quotes)} quotes in desktop/mobile layouts at 3x density.")
